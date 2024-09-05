@@ -312,7 +312,7 @@ export default {
         })
         .catch(error => {
           console.error('Erro:', error);
-          if (error instanceof SubmissionError) {
+          if (error instanceof Error) {
             return error.errors._error;
           } else {
             return error.message;
