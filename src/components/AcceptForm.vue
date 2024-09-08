@@ -457,7 +457,7 @@ export default {
     getGeoPlaces(input) {
       this.isSearching = true;
 
-      return this.geoplace(input).then((result) => {
+      return this.geoplace({input}).then((result) => {
         this.isSearching = false;
 
         if (result.success) {
