@@ -1,16 +1,16 @@
 <template>
 
-  <Menu />
+  <Contracts />
 
 </template>
 
 <script>
-import Menu from "../../components/config/contract/Table";
+import Contracts from "../../components/config/contracts/Table";
 
 export default {
   //
   components: {
-    Menu,
+    Contracts,
   },
 
   computed: {
