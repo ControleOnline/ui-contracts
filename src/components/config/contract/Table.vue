@@ -5,14 +5,13 @@
 <script>
 import { mapActions, mapGetters } from "vuex";
 
-
 export default {
   components: {},
 
   computed: {
     ...mapGetters({
       defaultCompany: "people/defaultCompany",
-    }), 
+    }),
     configs() {
       return {
         externalFilters: false,
@@ -20,6 +19,7 @@ export default {
         categories: ["contract"],
         add: true,
         delete: true,
+        filters: true,
         selection: false,
         search: false,
         columns: {
@@ -32,9 +32,6 @@ export default {
         },
       };
     },
-     
   },
 };
 </script>
-
-
