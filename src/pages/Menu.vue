@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import Contracts from "@controleonline/ui-contracts/src/components/config/Contract/Table";
+import Contracts from "@controleonline/ui-contracts/src/components/Contract/Table";
 
 export default {
   //

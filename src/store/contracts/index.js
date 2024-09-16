@@ -58,11 +58,28 @@ export default {
       {
         sortable: true,
         name: "status",
-        editable: false,
-        label: "status",
         align: "left",
-        format(value, column, row) {
-          return value;
+        label: "status",
+        list: "status/getItems",
+        searchParam: "status",
+        externalFilter: true,
+        format: function (value) {
+          return value?.status;
+        },
+        style: function (value) {
+          return {
+            color: value?.status?.color,
+          };
+        },
+        formatList: function (value) {
+          if (value)
+            return {
+              value: value["@id"].split("/").pop(),
+              label: value?.status,
+            };
+        },
+        saveFormat: function (value) {
+          return value ? "/statuses/" + (value?.value || value) : null;
         },
       },
       {
