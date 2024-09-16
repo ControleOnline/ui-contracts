@@ -4,6 +4,9 @@ import mutations from "@controleonline/ui-default/src/store/default/mutations";
 import Formatter from "@controleonline/ui-common/src/utils/formatter.js";
 
 
+
+
+
 export default {
   namespaced: true,
   state: {
@@ -22,20 +25,77 @@ export default {
         align: "left",
         label: "id",
         externalFilter: true,
+        to: function (column) {
+          return {
+            name: "contractsDetails",
+            params: { id: column.id },
+          };
+        },        
         format: function (value) {
           return "#" + value;
         },
       },
       {
         sortable: true,
-        name: "contract",
+        name: "creationDate",
         editable: false,
-        label: "contract",
+        label: "creationDate",
+        align: "left",
+        format: function (value) {
+          return Formatter.formatDateYmdTodmY(value);
+        },
+      },
+      {
+        sortable: true,
+        name: "alterDate",
+        editable: false,
+        label: "alterDate",
+        align: "left",
+        format: function (value) {
+          return Formatter.formatDateYmdTodmY(value);
+        },
+      },      
+      {
+        sortable: true,
+        name: "status",
+        editable: false,
+        label: "status",
         align: "left",
         format(value, column, row) {
           return value;
         },
       },
+      {
+        sortable: true,
+        name: "contractParent",
+        editable: false,
+        label: "contractParent",
+        align: "left",     
+        format(value, column, row) {
+          return value;
+        },
+      },
+      {
+        sortable: true,
+        name: "startDate",
+        editable: false,
+        label: "startDate",
+        align: "left",
+        format: function (value) {
+          return Formatter.formatDateYmdTodmY(value);
+        },
+      },  
+      {
+        sortable: true,
+        name: "endDate",
+        editable: false,
+        label: "endDate",
+        align: "left",
+        format: function (value) {
+          return Formatter.formatDateYmdTodmY(value);
+        },
+      },  
+      
     ],
   },
   actions: actions,
