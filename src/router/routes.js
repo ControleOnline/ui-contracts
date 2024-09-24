@@ -8,7 +8,7 @@ export const routes = [{
         component: () =>  import ('@controleonline/ui-contracts/src/pages/Menu.vue'),
       },    
       {
-        name: "contractsDetails",
+        name: "contractDetails",
         path: "id/:id",
         component: () => import("@controleonline/ui-contracts/src/pages/Details.vue"),
       }      

@@ -16,14 +16,25 @@ export default {
       return {
         externalFilters: false,
         store: "contracts",
-        categories: ["contract"],
+        status: ["contract"],
         add: true,
         delete: true,
         filters: true,
         selection: false,
         search: false,
         columns: {
-          category: {
+          contractModel: {
+            component: this.$components.DefaultTable,
+            icon: "person",
+            externalFilters: false,
+            store: "contract_model",
+            filters: true,
+            add: true,
+            delete: true,
+            selection: false,
+            search: false,
+          },
+          status: {
             filters: {
               context: "contract",
               company: "/people/" + this.defaultCompany.id,
