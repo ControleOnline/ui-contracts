@@ -6,7 +6,7 @@ import Formatter from "@controleonline/ui-common/src/utils/formatter.js";
 export default {
   namespaced: true,
   state: {
-    resourceEndpoint: "contracts",
+    resourceEndpoint: "contract_models",
     isLoading: false,
     error: "",
     violations: null,
@@ -107,13 +107,6 @@ export default {
         format: function (value) {
           return Formatter.formatDateYmdTodmY(value);
         },
-      },
-      {
-        sortable: true,
-        name: "contractModel",
-        editable: false,
-        label: "contractModel",
-        align: "left",
       },
     ],
   },
