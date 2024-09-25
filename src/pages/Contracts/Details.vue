@@ -1,5 +1,5 @@
 <template>
-  <Orders :context="context" v-if="context" />
+  <Orders :context="context" />
 </template>
 
 <script>
@@ -12,7 +12,7 @@ export default {
 
   data() {
     return {
-      context: "sales",
+      context: "contracts",
     };
   },
   created() {},

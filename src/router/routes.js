@@ -5,12 +5,12 @@ export const routes = [{
       {
         name: 'ContractIndex',
         path: '',
-        component: () =>  import ('@controleonline/ui-contracts/src/pages/Menu.vue'),
+        component: () =>  import ('@controleonline/ui-contracts/src/pages/Contracts'),
       },    
       {
         name: "contractDetails",
         path: "id/:id",
-        component: () => import("@controleonline/ui-contracts/src/pages/Details.vue"),
+        component: () => import("@controleonline/ui-contracts/src/pages/Contracts/Details.vue"),
       }      
     ]
   }];

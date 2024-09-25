@@ -8,6 +8,12 @@ import DefaultDetail from "@controleonline/ui-default/src/components/Default/Com
 
 export default {
   components: { DefaultDetail },
+  props: {
+    context: {
+      required: false,
+      default: this.context,
+    },
+  },
   data() {
     return {
       contractId: null,
@@ -24,8 +30,8 @@ export default {
     configs() {
       return {
         externalFilters: false,
-        store: "contracts",
-        status: ["contract"],
+        store: this.context,
+        status: [this.context],
         add: true,
         delete: true,
         filters: true,
@@ -45,7 +51,7 @@ export default {
           },
           status: {
             filters: {
-              context: "contract",
+              context: this.context,
               company: "/people/" + this.defaultCompany.id,
             },
           },

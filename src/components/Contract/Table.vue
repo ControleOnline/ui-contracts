@@ -7,7 +7,12 @@ import { mapActions, mapGetters } from "vuex";
 
 export default {
   components: {},
-
+  props: {
+    context: {
+      required: false,
+      default: "contracts",
+    },
+  },
   computed: {
     ...mapGetters({
       defaultCompany: "people/defaultCompany",
@@ -15,8 +20,8 @@ export default {
     configs() {
       return {
         externalFilters: false,
-        store: "contracts",
-        status: ["contract"],
+        store: this.context,
+        status: [this.context],
         add: true,
         delete: true,
         filters: true,
@@ -36,7 +41,7 @@ export default {
           },
           status: {
             filters: {
-              context: "contract",
+              context: this.context,
               company: "/people/" + this.defaultCompany.id,
             },
           },

@@ -1,25 +1,20 @@
 <template>
-
-  <Contracts />
-
+  <Contracts :context="context" />
 </template>
 
 <script>
 import Contracts from "@controleonline/ui-contracts/src/components/Contract/Table";
 
 export default {
-  //
   components: {
     Contracts,
   },
 
-  computed: {
-
-  },
+  computed: {},
 
   data() {
     return {
-
+      context: "contracts",
     };
   },
 
