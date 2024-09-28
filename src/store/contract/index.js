@@ -6,7 +6,7 @@ import Formatter from "@controleonline/ui-common/src/utils/formatter.js";
 export default {
   namespaced: true,
   state: {
-    resourceEndpoint: "contract_models",
+    resourceEndpoint: "contracts",
     isLoading: false,
     error: "",
     violations: null,
@@ -33,22 +33,22 @@ export default {
       },
       {
         sortable: true,
-        name: "creationDate",
-        editable: false,
-        label: "creationDate",
+        name: "contractModel",
+        editable: true,
+        label: "contractModel",
         align: "left",
+        list: "contract_model/getItems",
+        searchParam: "model",
+        externalFilter: true,
         format: function (value) {
-          return Formatter.formatDateYmdTodmY(value);
+          return value?.model;
         },
-      },
-      {
-        sortable: true,
-        name: "alterDate",
-        editable: false,
-        label: "alterDate",
-        align: "left",
-        format: function (value) {
-          return Formatter.formatDateYmdTodmY(value);
+        formatList: function (value) {
+          if (value)
+            return {
+              value: value["@id"].split("/").pop(),
+              label: value?.model,
+            };
         },
       },
       {
@@ -78,6 +78,27 @@ export default {
           return value ? "/statuses/" + (value?.value || value) : null;
         },
       },
+      {
+        sortable: true,
+        name: "creationDate",
+        editable: false,
+        label: "creationDate",
+        align: "left",
+        format: function (value) {
+          return Formatter.formatDateYmdTodmY(value);
+        },
+      },
+      {
+        sortable: true,
+        name: "alterDate",
+        editable: false,
+        label: "alterDate",
+        align: "left",
+        format: function (value) {
+          return Formatter.formatDateYmdTodmY(value);
+        },
+      },
+
       {
         sortable: true,
         name: "contractParent",
