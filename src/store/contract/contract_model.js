@@ -90,7 +90,7 @@ export default {
       {
         sortable: true,
         inputType: "file",
-        fileType: ["html","text"],
+        fileType: ["html", "text"],
         style() {
           //return { display: "none" };
         },
@@ -99,6 +99,11 @@ export default {
         editable: true,
         label: "file",
         align: "left",
+        saveFormat: function (value) {
+          console.log(value)
+          if (typeof value == "object") return value["@id"];
+          else return value.toString();
+        },
       },
     ],
   },
