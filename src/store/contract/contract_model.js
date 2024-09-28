@@ -89,7 +89,11 @@ export default {
       },
       {
         sortable: true,
-        inputType: "html",
+        //inputType: "html",
+
+        inputType: "file",
+        fileType: ["html"],
+
         style() {
           return { display: "none" };
         },
