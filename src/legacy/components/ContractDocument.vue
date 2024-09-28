@@ -220,7 +220,6 @@ export default {
       this.isEditing = true;
     },
     toggleSave() {
-      console.log('Save');
       this.showDialogEditContract = true;
     },
     cancelChangeContract() {

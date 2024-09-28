@@ -100,7 +100,6 @@ export default {
         label: "file",
         align: "left",
         saveFormat: function (value) {
-          console.log(value)
           if (typeof value == "object") return value["@id"];
           else return value.toString();
         },
