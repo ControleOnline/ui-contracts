@@ -90,14 +90,14 @@ export default {
       {
         sortable: true,
         inputType: "file",
-        fileType: ["html"],
+        fileType: ["html","text"],
         style() {
-          return { display: "none" };
+          //return { display: "none" };
         },
         formClass: "row col-12 full-width",
-        name: "content",
+        name: "file",
         editable: true,
-        label: "content",
+        label: "file",
         align: "left",
       },
     ],

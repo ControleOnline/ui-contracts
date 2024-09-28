@@ -5,7 +5,7 @@ export default function getConfigs(context, myCompany, $components, $store) {
     component: $components.DefaultTable,
     externalFilters: false,
     icon: "person",
-    loadOnEdit: true,
+    //loadOnEdit: true,
     store: "contract_model",
     categories: [context + "-model"],
     add: true,
