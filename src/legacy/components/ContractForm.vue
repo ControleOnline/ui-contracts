@@ -15,7 +15,7 @@
         <q-select dense outlined  stack-label emit-value map-options :hide-dropdown-icon="readOnly"
           v-model    ="template"
           :label     ="$t('contracts.model')"
-          :options   ="contractModels"
+          :options   ="models"
           :loading   ="loadingModels"
           :outlined  ="!readOnly"
           :borderless="readOnly"
@@ -89,7 +89,7 @@ export default {
   },
 
   created() {
-    this.loadContractModels();
+    this.loadModels();
   },
 
   data() {
@@ -97,7 +97,7 @@ export default {
       status        : this.$t(`contracts.statuses.${this.contract.status}`),
       template      : null,
       startDate     : this.$formatter.formatDateYmdTodmY(this.contract.startDate),
-      contractModels: [],
+      models: [],
       loadingModels : false,
       isSaving      : false,
     }
@@ -113,7 +113,7 @@ export default {
             id: this.contract.id
           },
           payload: {
-            contractModel: this.template,
+            model: this.template,
             startDate    : this.startDate.replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, "$3-$2-$1"),
           },
           query  : {
@@ -141,12 +141,12 @@ export default {
         ;
     },
 
-    loadContractModels() {
+    loadModels() {
       if (this.loadingModels) {
         return;
       }
 
-      if (this.contractModels.length) {
+      if (this.models.length) {
         return;
       }
 
@@ -159,7 +159,7 @@ export default {
             if (data) {
               data.members.forEach(template => {
                 templates.push({
-                  label: template.contractModel,
+                  label: template.model,
                   value: template['@id'],
                 });
               });
@@ -168,7 +168,7 @@ export default {
             return templates;
           })
           .then(templates => {
-            this.contractModels = templates;
+            this.models = templates;
             this.template       = this.contract.template['@id'];
           })
           .finally(() => {

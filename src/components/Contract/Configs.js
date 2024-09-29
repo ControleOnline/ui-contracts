@@ -1,4 +1,4 @@
-import getContractModelConfigs from "../ContractModel/Configs";
+import getModelConfigs from "@controleonline/ui-crm/src/components/Model/Configs";
 
 export default function getConfigs(context, myCompany, $components, $store) {
   return {
@@ -11,7 +11,7 @@ export default function getConfigs(context, myCompany, $components, $store) {
     selection: false,
     search: false,
     columns: {
-      contractModel: getContractModelConfigs(
+      model: getModelConfigs(
         context,
         myCompany,
         $components,

@@ -33,11 +33,11 @@ export default {
       },
       {
         sortable: true,
-        name: "contractModel",
+        name: "model",
         editable: true,
-        label: "contractModel",
+        label: "model",
         align: "left",
-        list: "contract_model/getItems",
+        list: "model/getItems",
         searchParam: "model",
         externalFilter: true,
         format: function (value) {

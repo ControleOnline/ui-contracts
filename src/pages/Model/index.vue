@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import Contracts from "@controleonline/ui-contracts/src/components/ContractModel/Table";
+import Contracts from "@controleonline/ui-crm/src/components/Model/Table";
 
 export default {
   components: {

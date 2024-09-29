@@ -2,7 +2,7 @@
 
 export default class GetTemplateList extends Resource {
   constructor(client) {
-    super(client, '/my_contract_models', 'GET', true)
+    super(client, '/my_models', 'GET', true)
   }
 
   fetch(options) {

@@ -187,11 +187,11 @@ export default {
             })(data);
 
             contract.template = (function (c) {
-              if (!c.contractModel) return null;
+              if (!c.model) return null;
 
               return {
-                "@id": c.contractModel["@id"],
-                id: c.contractModel["@id"].replace(/\D/g, ""),
+                "@id": c.model["@id"],
+                id: c.model["@id"].replace(/\D/g, ""),
               };
             })(data);
 

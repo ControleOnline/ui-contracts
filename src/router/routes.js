@@ -26,17 +26,17 @@ export const routes = [
       import("@controleonline/ui-layout/src/layouts/AdminLayout.vue"),
     children: [
       {
-        name: "contractModel",
+        name: "model",
         path: "",
         component: () =>
-          import("@controleonline/ui-contracts/src/pages/ContractModel"),
+          import("@controleonline/ui-contracts/src/pages/Model"),
       },
       {
-        name: "contractModelDetails",
+        name: "modelDetails",
         path: "id/:id",
         component: () =>
           import(
-            "@controleonline/ui-contracts/src/pages/ContractModel/Details.vue"
+            "@controleonline/ui-contracts/src/pages/Model/Details.vue"
           ),
       },
     ],
