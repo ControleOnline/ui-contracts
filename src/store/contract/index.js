@@ -31,11 +31,29 @@ export default {
           return "#" + value;
         },
       },
+
       {
         sortable: true,
-        name: "model",
+        name: "peoples.people.name",
+        editable: false,
+        label: "contractor",
+        align: "left",
+        externalFilter: true,
+        multiline: true,
+        format: function (value, column, row) {
+          let peoples = [];
+          row.peoples.forEach((people, i) => {
+            if (people.people_type == "Contractor")
+              peoples.push(people.people.name);
+          });
+          return peoples;
+        },
+      },
+      {
+        sortable: true,
+        name: "contractModel",
         editable: true,
-        label: "model",
+        label: "contractModel",
         align: "left",
         list: "model/getItems",
         searchParam: "model",
@@ -49,6 +67,9 @@ export default {
               value: value["@id"].split("/").pop(),
               label: value?.model,
             };
+        },
+        saveFormat: function (value) {
+          return value ? "/models/" + (value?.value || value) : null;
         },
       },
       {
@@ -82,7 +103,10 @@ export default {
         sortable: true,
         name: "creationDate",
         editable: false,
+        add: false,
         label: "creationDate",
+        inputType: "date-range",
+
         align: "left",
         format: function (value) {
           return Formatter.formatDateYmdTodmY(value);
@@ -91,30 +115,26 @@ export default {
       {
         sortable: true,
         name: "alterDate",
+        add: false,
         editable: false,
         label: "alterDate",
+        inputType: "date-range",
+
         align: "left",
         format: function (value) {
           return Formatter.formatDateYmdTodmY(value);
         },
       },
-
-      {
-        sortable: true,
-        name: "contractParent",
-        editable: false,
-        label: "contractParent",
-        align: "left",
-        format(value, column, row) {
-          return value;
-        },
-      },
       {
         sortable: true,
         name: "startDate",
-        editable: false,
+        inputType: "date-range",
+        editable: true,
         label: "startDate",
         align: "left",
+        saveFormat: function (value) {
+          return Formatter.buildAmericanDate(value);
+        },
         format: function (value) {
           return Formatter.formatDateYmdTodmY(value);
         },
@@ -122,9 +142,13 @@ export default {
       {
         sortable: true,
         name: "endDate",
-        editable: false,
+        inputType: "date-range",
+        editable: true,
         label: "endDate",
         align: "left",
+        saveFormat: function (value) {
+          return value ? Formatter.buildAmericanDate(value) : null;
+        },
         format: function (value) {
           return Formatter.formatDateYmdTodmY(value);
         },
