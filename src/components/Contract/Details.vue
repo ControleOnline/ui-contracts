@@ -3,10 +3,11 @@
 
   <Html
     v-if="item && item.contractFile && item.contractFile.extension == 'html'"
-    :readonly="false" 
+    :readonly="false"
     :generatePDF="true"
     :data="item.contractFile"
     @changed="changed"
+    @converted="converted"
   />
 </template>
 
@@ -50,7 +51,10 @@ export default {
     },
   },
   methods: {
-    changed(data) {
+    converted(data) {
+      let item = this.$copyObject(this.item);
+      item.contractFile = data;
+      this.$store.commit("contract/SET_ITEM", item);
     },
   },
 };
