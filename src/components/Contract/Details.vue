@@ -1,6 +1,5 @@
 <template>
   <DefaultDetail :configs="configs" :id="contractId" />
-
   <Html
     v-if="item && item.contractFile && item.contractFile.extension == 'html'"
     :readonly="false"
@@ -9,6 +8,14 @@
     @changed="changed"
     @converted="converted"
   />
+  <iframe
+    class="full-width"
+    :style="{ height: '100vh !important' }"
+    v-else-if="
+      item && item.contractFile && item.contractFile.extension == 'pdf'
+    "
+    :src="$pdf(this.item.contractFile)"
+  ></iframe>
 </template>
 
 <script>
@@ -28,6 +35,7 @@ export default {
   data() {
     return {
       contractId: null,
+      pdfBlobUrl: null,
     };
   },
   created() {
