@@ -1,5 +1,5 @@
 <template>
-  <DefaultDetail :configs="configs" :id="contractId" />
+  <DefaultDetail :configs="configs" :id="contractId" @saved="saved" />
   <Html
     v-if="item && item.contractFile && item.contractFile.extension == 'html'"
     :readonly="false"
@@ -16,6 +16,31 @@
     "
     :src="$pdf(this.item.contractFile)"
   ></iframe>
+
+  <div
+    v-if="
+      item &&
+      item.contractFile &&
+      item.contractFile.extension == 'pdf' &&
+      item.status.realStatus != 'closed'
+    "
+    class="row justify-end q-pa-sm bg sticky-bottom full-width"
+  >
+    <q-btn
+      v-if="!item.contractFile.docKey && item.status.realStatus == 'open'"
+      icon="edit"
+      :label="$tt('file', 'btn', 'edit')"
+      color="primary"
+      @click="generate"
+    />
+    <q-btn
+      v-if="!item.contractFile.docKey && item.status.realStatus == 'open'"
+      icon="save"
+      :label="$tt('file', 'btn', 'assign')"
+      color="primary"
+      @click="save"
+    />
+  </div>
 </template>
 
 <script>
@@ -59,6 +84,17 @@ export default {
     },
   },
   methods: {
+    ...mapActions({
+      generateContract: "contract/generate",
+    }),
+    saved(data) {
+      this.$store.commit("contract/SET_ITEM", data);
+    },
+    generate() {
+      this.generateContract({ id: this.item.id }).then((data) => {
+        console.log(data);
+      });
+    },
     converted(data) {
       let item = this.$copyObject(this.item);
       item.contractFile = data;

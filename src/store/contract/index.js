@@ -2,6 +2,7 @@ import * as actions from "@controleonline/ui-default/src/store/default/actions";
 import * as getters from "@controleonline/ui-default/src/store/default/getters";
 import mutations from "@controleonline/ui-default/src/store/default/mutations";
 import Formatter from "@controleonline/ui-common/src/utils/formatter.js";
+import * as customActions from "./actions";
 
 export default {
   namespaced: true,
@@ -106,10 +107,12 @@ export default {
         add: false,
         label: "creationDate",
         inputType: "date-range",
-
         align: "left",
         format: function (value) {
           return Formatter.formatDateYmdTodmY(value);
+        },
+        saveFormat: function (value) {
+          return;
         },
       },
       {
@@ -123,6 +126,9 @@ export default {
         align: "left",
         format: function (value) {
           return Formatter.formatDateYmdTodmY(value);
+        },
+        saveFormat: function (value) {
+          return;
         },
       },
       {
@@ -155,7 +161,7 @@ export default {
       },
     ],
   },
-  actions: actions,
+  actions: { ...actions, ...customActions },
   getters,
   mutations,
 };
