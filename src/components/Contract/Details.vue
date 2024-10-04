@@ -4,6 +4,7 @@
   <Html
     v-if="item && item.contractFile && item.contractFile.extension == 'html'"
     :readonly="false" 
+    :generatePDF="true"
     :data="item.contractFile"
     @changed="changed"
   />
@@ -50,7 +51,6 @@ export default {
   },
   methods: {
     changed(data) {
-      console.log(data);
     },
   },
 };
