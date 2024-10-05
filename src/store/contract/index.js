@@ -45,7 +45,7 @@ export default {
         format: function (value, column, row) {
           let peoples = [];
           row.peoples.forEach((people, i) => {
-            if (people.people_type == "Contractor")
+            if (people.peopleType == "Contractor")
               peoples.push(people.people.name);
           });
           return peoples;

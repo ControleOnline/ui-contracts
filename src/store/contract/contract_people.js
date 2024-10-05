@@ -20,18 +20,56 @@ export default {
         align: "left",
         label: "id",
         externalFilter: true,
-        to: function (value) {
+        to: function (value, column, row) {
+         
           return {
-            name: "contractDetails",
-            params: { id: value },
+            name: "CustomersDetails",
+            params: { id: row.people.id },
+            target: "__blank",
           };
         },
-        format: function (value) {
-          return "#" + value;
+        format: function (value, column, row) {
+          return "#" + row.people.id;
         },
       },
 
-    
+      {
+        sortable: true,
+        name: "people",
+        align: "left",
+        label: "people",
+        list: "people/getItems",
+        externalFilter: false,
+        format: function (value) {
+          return value ? value?.name + " - " + value?.alias : " - ";
+        },
+        formatList: function (value) {
+          if (value)
+            return {
+              value: value["@id"].split("/").pop(),
+              label: value?.name + " - " + value?.alias,
+            };
+        },
+        saveFormat: function (value) {
+          return value ? "/people/" + (value.value || value) : null;
+        },
+      },
+      {
+        editable: true,
+        sortable: true,
+        name: "peopleType",
+        align: "left",
+        label: "peopleType",
+        externalFilter: true,
+        list: [
+          { value: "Beneficiary", label: "Beneficiary" },
+          { value: "Contractor", label: "Contractor" },
+          { value: "Witness", label: "Witness" },
+        ],
+        format: function (value) {
+          return value;
+        },
+      },
     ],
   },
   actions,

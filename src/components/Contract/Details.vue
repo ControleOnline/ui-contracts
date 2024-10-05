@@ -5,6 +5,15 @@
     @saved="saved"
     :key="key"
   />
+
+  <q-card class="row">
+    <template v-for="(multiline, name) in configs.multiline">
+      <div class="col-12">
+        <DefaultTable :configs="multiline" @saved="saved" />
+      </div>
+    </template>
+  </q-card>
+
   <Html
     v-if="item && item.contractFile && item.contractFile.extension == 'html'"
     :readonly="false"
@@ -72,7 +81,11 @@ export default {
       pdfBlobUrl: null,
     };
   },
-  created() {},
+  created() {
+    this.$store.commit("contract_people/SET_FILTERS", {
+      contract: "/contracts/" + this.contractId,
+    });
+  },
   computed: {
     ...mapGetters({
       myCompany: "people/currentCompany",
@@ -96,7 +109,8 @@ export default {
       signContract: "contract/sign",
     }),
     saved(data) {
-      this.$store.commit("contract/SET_ITEM", data);
+      if (data && typeof data == "object" && data["@type"] == "Contract")
+        this.$store.commit("contract/SET_ITEM", data);
       this.key++;
     },
     generate() {
