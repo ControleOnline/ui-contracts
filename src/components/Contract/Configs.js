@@ -12,6 +12,31 @@ export default function getConfigs(context, myCompany, $components, $store) {
     filters: true,
     selection: false,
     search: true,
+
+    multiline: {
+      people: {
+        store: "contract_people",
+        add: true,
+        delete: true,
+        title: {
+          class: "text-primary text-h6 q-mb-md",
+          icon: {
+            name: "people",
+            size: "24px",
+            class: "q-mr-sm",
+          },
+        },
+        filters: {
+          contract: "Contractor",
+          company: "/contract/" + myCompany.id,
+        },
+        companyParam:false,
+        selection: false,
+        externalFilters: false,
+        controls: false,
+        search: false,
+      },
+    },
     columns: {
       contractModel: {
         filters: {

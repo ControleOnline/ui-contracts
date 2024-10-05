@@ -35,13 +35,13 @@ export default {
 
       {
         sortable: true,
-        name: "peoples.people.name",
-        editable: false,
-        label: "contractor",
+        name: "peoples",
+        editable: true,
+        label: "peoples",
         align: "left",
         externalFilter: true,
         multiline: true,
-        add: false,
+        add: true,
         format: function (value, column, row) {
           let peoples = [];
           row.peoples.forEach((people, i) => {
