@@ -57,16 +57,18 @@ export default {
       required: false,
       default: "contract",
     },
+    contractId:{
+      required: true,
+
+    }
   },
   data() {
     return {
       key: 0,
-      contractId: null,
       pdfBlobUrl: null,
     };
   },
   created() {
-    this.contractId = decodeURIComponent(this.$route.params.id);
   },
   computed: {
     ...mapGetters({

@@ -1,20 +1,23 @@
 <template>
-  <Orders :context="context" />
+  <Contract :context="context" :contractId="contractId" />
 </template>
 
 <script>
-import Orders from "@controleonline/ui-contracts/src/components/Contract/Details.vue";
+import Contract from "@controleonline/ui-contracts/src/components/Contract/Details.vue";
 
 export default {
   components: {
-    Orders,
+    Contract,
   },
 
   data() {
     return {
       context: "contract",
+      contractId: null,
     };
   },
-  created() {},
+  created() {
+    this.contractId = decodeURIComponent(this.$route.params.id);
+  },
 };
 </script>
