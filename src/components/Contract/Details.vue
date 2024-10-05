@@ -5,6 +5,7 @@
     :readonly="false"
     :generatePDF="true"
     :data="item.contractFile"
+    :key="key"
     @changed="changed"
     @converted="converted"
   />
@@ -36,9 +37,9 @@
     <q-btn
       v-if="!item.contractFile.docKey && item.status.realStatus == 'open'"
       icon="save"
-      :label="$tt('file', 'btn', 'assign')"
+      :label="$tt('file', 'btn', 'sign')"
       color="primary"
-      @click="save"
+      @click="sign"
     />
   </div>
 </template>
@@ -59,6 +60,7 @@ export default {
   },
   data() {
     return {
+      key: 0,
       contractId: null,
       pdfBlobUrl: null,
     };
@@ -86,13 +88,20 @@ export default {
   methods: {
     ...mapActions({
       generateContract: "contract/generate",
+      signContract: "contract/sign",
     }),
     saved(data) {
-      this.$store.commit("contract/SET_ITEM", data);
+      this.generate();
     },
     generate() {
       this.generateContract({ id: this.item.id }).then((data) => {
-        console.log(data);
+        this.$store.commit("contract/SET_ITEM", data);
+        this.key++;
+      });
+    },
+    sign() {
+      this.signContract({ id: this.item.id }).then((data) => {
+        this.$store.commit("contract/SET_ITEM", data);
       });
     },
     converted(data) {
