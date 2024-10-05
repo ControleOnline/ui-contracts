@@ -1,5 +1,10 @@
 <template>
-  <DefaultDetail :configs="configs" :id="contractId" @saved="saved" />
+  <DefaultDetail
+    :configs="configs"
+    :id="contractId"
+    @saved="saved"
+    :key="key"
+  />
   <Html
     v-if="item && item.contractFile && item.contractFile.extension == 'html'"
     :readonly="false"
@@ -57,10 +62,9 @@ export default {
       required: false,
       default: "contract",
     },
-    contractId:{
+    contractId: {
       required: true,
-
-    }
+    },
   },
   data() {
     return {
@@ -68,8 +72,7 @@ export default {
       pdfBlobUrl: null,
     };
   },
-  created() {
-  },
+  created() {},
   computed: {
     ...mapGetters({
       myCompany: "people/currentCompany",
@@ -103,7 +106,7 @@ export default {
     },
     sign() {
       this.signContract({ id: this.item.id }).then((data) => {
-        this.$store.commit("contract/SET_ITEM", data);
+        this.saved(data);
       });
     },
     converted(data) {
