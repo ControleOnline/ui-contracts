@@ -41,6 +41,7 @@ export default {
         align: "left",
         externalFilter: true,
         multiline: true,
+        add: false,
         format: function (value, column, row) {
           let peoples = [];
           row.peoples.forEach((people, i) => {

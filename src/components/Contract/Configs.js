@@ -8,7 +8,7 @@ export default function getConfigs(context, myCompany, $components, $store) {
     status: [context],
     companyParam: "beneficiary",
     add: true,
-    delete: true,
+    delete: false,
     filters: true,
     selection: false,
     search: true,

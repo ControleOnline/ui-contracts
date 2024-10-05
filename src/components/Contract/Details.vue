@@ -91,12 +91,12 @@ export default {
       signContract: "contract/sign",
     }),
     saved(data) {
-      this.generate();
+      this.$store.commit("contract/SET_ITEM", data);
+      this.key++;
     },
     generate() {
       this.generateContract({ id: this.item.id }).then((data) => {
-        this.$store.commit("contract/SET_ITEM", data);
-        this.key++;
+        this.saved(data);
       });
     },
     sign() {
