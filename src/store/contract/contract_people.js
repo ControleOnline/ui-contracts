@@ -21,15 +21,13 @@ export default {
         label: "id",
         externalFilter: true,
         to: function (value, column, row) {
-         
           return {
             name: "CustomersDetails",
             params: { id: row.people.id },
-            target: "__blank",
           };
         },
         format: function (value, column, row) {
-          return "#" + row.people.id;
+          return "#" + row?.people?.id;
         },
       },
 
