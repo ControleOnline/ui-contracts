@@ -21,7 +21,7 @@ export default {
         name: "id",
         align: "left",
         label: "id",
-        externalFilter: true,
+        externalFilter: false,
         to: function (value) {
           return {
             name: "contractDetails",
@@ -39,7 +39,7 @@ export default {
         editable: true,
         label: "peoples",
         align: "left",
-        externalFilter: true,
+        externalFilter: false,
         multiline: true,
         add: true,
         format: function (value, column, row) {
@@ -59,7 +59,7 @@ export default {
         align: "left",
         list: "model/getItems",
         searchParam: "model",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return value?.model;
         },
@@ -81,7 +81,7 @@ export default {
         label: "status",
         list: "status/getItems",
         searchParam: "status",
-        externalFilter: true,
+        externalFilter: false,
         format: function (value) {
           return value?.status;
         },

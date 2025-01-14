@@ -3,7 +3,7 @@ import getModelConfigs from "@controleonline/ui-crm/src/components/Model/Configs
 
 export default function getConfigs(context, myCompany, $components, $store) {
   return {
-    externalFilters: true,
+    externalFilters: false,
     store: "contract",
     status: [context],
     companyParam: "beneficiary",

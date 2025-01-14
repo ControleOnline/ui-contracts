@@ -19,7 +19,7 @@ export default {
         name: "id",
         align: "left",
         label: "id",
-        externalFilter: true,
+        externalFilter: false,
         to: function (value, column, row) {
           return {
             name: "CustomersDetails",
@@ -58,7 +58,7 @@ export default {
         name: "peopleType",
         align: "left",
         label: "peopleType",
-        externalFilter: true,
+        externalFilter: false,
         list: [
           { value: "Beneficiary", label: "Beneficiary" },
           { value: "Contractor", label: "Contractor" },
