@@ -21,19 +21,19 @@ export const routes = [
     ],
   },
   {
-    path: "/contract/models/",
+    path: "/contract/",
     component: () =>
       import("@controleonline/ui-layout/src/layouts/AdminLayout.vue"),
     children: [
       {
         name: "model",
-        path: "",
+        path: "models",
         component: () =>
           import("@controleonline/ui-contracts/src/pages/Model"),
       },
       {
         name: "modelDetails",
-        path: "id/:id",
+        path: "models/id/:id",
         component: () =>
           import(
             "@controleonline/ui-contracts/src/pages/Model/Details.vue"
