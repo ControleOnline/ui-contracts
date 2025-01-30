@@ -1,4 +1,3 @@
-import DefaultButtonDialog from "@controleonline/ui-default/src/components/Default/DefaultButtonDialog";
 import getModelConfigs from "@controleonline/ui-crm/src/components/Model/Configs";
 
 export default function getConfigs(context, myCompany, $components, $store) {
@@ -60,7 +59,7 @@ export default function getConfigs(context, myCompany, $components, $store) {
     components: {
       headerActions: [
         {
-          component: DefaultButtonDialog,
+          component: this.$components.DefaultButtonDialog,
           props: {
             component: $components.DefaultTable,
           },
