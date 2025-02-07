@@ -380,7 +380,7 @@ export default {
         url: url,
         headers: {
           'Accept': 'application/ld+json',
-          'API-TOKEN': this.logged.token,
+          'API-TOKEN': this.logged.api_key,
         },
         params: params,
       };

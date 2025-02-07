@@ -57,7 +57,7 @@ export default {
       // config api
       configs.Api.setAsFake (false);
       configs.Api.setBaseUrl('https://api.dev.foccuscegonhas.com.br/');
-      configs.Api.setToken  (this.$store.getters['auth/user'].token);
+      configs.Api.setToken  (this.$store.getters['auth/user'].api_key);
 
       // config routes
       configs.Routes.Details.name = 'ContractDetails';

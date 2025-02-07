@@ -116,7 +116,7 @@ export default {
       // config api
 
       configs.Api.setBaseUrl(this.$entrypoint);
-      configs.Api.setToken  (this.$store.getters['auth/user'].token);
+      configs.Api.setToken  (this.$store.getters['auth/user'].api_key);
       
       // config routes
 
