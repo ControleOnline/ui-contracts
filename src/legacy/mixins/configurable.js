@@ -1,4 +1,4 @@
-import { api } from "@controleonline/../../src/boot/api";
+import { api } from "@controleonline/ui-common/src/api";
 import filters from './filters';
 import params from './params';
 import routes from './routes';
