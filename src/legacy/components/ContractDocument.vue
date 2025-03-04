@@ -513,11 +513,8 @@ export default {
       currentCompany: "people/currentCompany",
       defaultCompany: "people/defaultCompany",
       myCompany: "people/currentCompany",
+      logged: "auth/user",
     }),
-
-    logged() {
-      return this.$store.getters["auth/user"];
-    },
 
     statusStyle() {
       let style = "text-center text-h6 rounded-borders q-pl-sm q-pr-sm ";

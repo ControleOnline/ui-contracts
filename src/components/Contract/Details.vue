@@ -89,10 +89,9 @@ export default {
   computed: {
     ...mapGetters({
       myCompany: "people/currentCompany",
+      item: "contract/item",
     }),
-    item() {
-      return this.$store.getters["contract/item"];
-    },
+
     configs() {
       let config = getConfigs(
         this.context,

@@ -15,10 +15,8 @@ export default {
   computed: {
     ...mapGetters({
       myCompany: "people/currentCompany",
+      task: "tasks/item",
     }),
-    task() {
-      return this.$store.getters["tasks/item"];
-    },
   },
 };
 </script>
