@@ -106,8 +106,8 @@ export default {
     ...mapActions({
       generateContract: "contract/generate",
       signContract: "contract/sign",
-      setFilters: "contract_people/SET_FILTERS",
-      setItem: "contract/SET_ITEM",
+      setFilters: "contract_people/setFilters",
+      setItem: "contract/setItem",
     }),
     saved(data) {
       if (data && typeof data == "object" && data["@type"] == "Contract")
