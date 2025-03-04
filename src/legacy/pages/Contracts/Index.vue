@@ -35,6 +35,7 @@ export default {
   computed: {
     ...mapGetters({
       currentCompany : 'people/currentCompany',
+      user           : 'auth/user',
     })
   },
 
@@ -57,7 +58,7 @@ export default {
       // config api
       configs.Api.setAsFake (false);
       configs.Api.setBaseUrl('https://api.dev.foccuscegonhas.com.br/');
-      configs.Api.setToken  (this.$store.getters['auth/user'].api_key);
+      configs.Api.setToken  (this.user.api_key);
 
       // config routes
       configs.Routes.Details.name = 'ContractDetails';
@@ -65,7 +66,7 @@ export default {
       // config params
       configs.Params.Company
         .getter = () => {
-          return this.$store.getters['people/currentCompany'].id;
+          return this.currentCompany.id;
         };
     },
   },
