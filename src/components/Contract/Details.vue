@@ -82,7 +82,7 @@ export default {
     };
   },
   created() {
-    this.$store.commit("contract_people/SET_FILTERS", {
+    this.setFilters({
       contract: "/contracts/" + this.contractId,
     });
   },
@@ -106,10 +106,12 @@ export default {
     ...mapActions({
       generateContract: "contract/generate",
       signContract: "contract/sign",
+      setFilters: "contract_people/SET_FILTERS",
+      setItem: "contract/SET_ITEM",
     }),
     saved(data) {
       if (data && typeof data == "object" && data["@type"] == "Contract")
-        this.$store.commit("contract/SET_ITEM", data);
+        this.setItem(data);
       this.key++;
     },
     generate() {
@@ -125,7 +127,7 @@ export default {
     converted(data) {
       let item = this.$copyObject(this.item);
       item.contractFile = data;
-      this.$store.commit("contract/SET_ITEM", item);
+      this.setItem(item);
     },
   },
 };
