@@ -59,7 +59,7 @@ export default function getConfigs(context, myCompany, $components, $store) {
     components: {
       headerActions: [
         {
-          component: this.$components.DefaultButtonDialog,
+          component: $components.DefaultButtonDialog,
           props: {
             component: $components.DefaultTable,
           },
