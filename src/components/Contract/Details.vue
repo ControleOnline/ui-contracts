@@ -14,7 +14,7 @@
     </template>
   </q-card>
 
-  <Html
+  <DefaultHtml
     v-if="item && item.contractFile && item.contractFile.extension == 'html'"
     :readonly="false"
     :generatePDF="true"
@@ -60,7 +60,7 @@
 
 <script>
 import { mapActions, mapGetters } from "vuex";
-import Html from "@controleonline/ui-default/src/components/Default/Inputs/Components/Html.vue";
+import Html from "@controleonline/ui-default/src/components/Default/Common/DefaultHtml.vue";
 import DefaultDetail from "@controleonline/ui-default/src/components/Default/Common/DefaultDetail.vue";
 import getConfigs from "./Configs";
 
