@@ -43,13 +43,6 @@ items:[],
         format: function (value) {
           return value ? value?.name + " - " + value?.alias : " - ";
         },
-        formatList: function (value) {
-          if (value)
-            return {
-              value: value["@id"].split("/").pop(),
-              label: value?.name + " - " + value?.alias,
-            };
-        },
         saveFormat: function (value) {
           return value ? "/people/" + (value.value || value) : null;
         },

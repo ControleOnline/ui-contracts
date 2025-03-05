@@ -65,13 +65,7 @@ items:[],
         format: function (value) {
           return value?.model;
         },
-        formatList: function (value) {
-          if (value)
-            return {
-              value: value["@id"].split("/").pop(),
-              label: value?.model,
-            };
-        },
+
         saveFormat: function (value) {
           return value ? "/models/" + (value?.value || value) : null;
         },
@@ -92,13 +86,7 @@ items:[],
             color: value?.status?.color,
           };
         },
-        formatList: function (value) {
-          if (value)
-            return {
-              value: value["@id"].split("/").pop(),
-              label: value?.status,
-            };
-        },
+
         saveFormat: function (value) {
           return value ? "/statuses/" + (value?.value || value) : null;
         },
