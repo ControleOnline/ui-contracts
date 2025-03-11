@@ -1,7 +1,7 @@
 export const routes = [
   {
     path: '/contracts/',
-    component: () =>  import ('@controleonline/ui-layout/src/layouts/AdminLayout.vue'),
+    component: () =>  import ('@controleonline/ui-layout/src/vue/layouts/AdminLayout.vue'),
     children: [
       { 
         name: 'ContractIndex'  , 
@@ -17,7 +17,7 @@ export const routes = [
   },
   {
     path: '/contract/',
-    component: () =>  import ('@controleonline/ui-layout/src/layouts/MainLayout.vue'),
+    component: () =>  import ('@controleonline/ui-layout/src/vue/layouts/MainLayout.vue'),
     children: [      
       { name: 'ContractAccept', path: 'accept/:id', component: () =>  import ('../pages/Contracts/Accept.vue') },      
     ]

@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import Contract from "@controleonline/ui-contracts/src/components/Contract/Details.vue";
+import Contract from "@controleonline/ui-contracts/src/vue/components/Contract/Details.vue";
 
 export default {
   components: {

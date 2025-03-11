@@ -60,8 +60,8 @@
 
 <script>
 import { mapActions, mapGetters } from "vuex";
-import Html from "@controleonline/ui-default/src/components/Default/Common/DefaultHtml.vue";
-import DefaultDetail from "@controleonline/ui-default/src/components/Default/Common/DefaultDetail.vue";
+import Html from "@controleonline/ui-default/src/vue/components/Default/Common/DefaultHtml.vue";
+import DefaultDetail from "@controleonline/ui-default/src/vue/components/Default/Common/DefaultDetail.vue";
 import getConfigs from "./Configs";
 
 export default {

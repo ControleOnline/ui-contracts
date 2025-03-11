@@ -294,7 +294,7 @@
 </template>
 
 <script>
-import ListAutocomplete from "@controleonline/ui-legacy/ui-common/src/components/Common/ListAutocomplete";
+import ListAutocomplete from "@controleonline/ui-legacy/ui-common/src/vue/components/Common/ListAutocomplete";
 import { mapActions } from "vuex";
 
 export default {

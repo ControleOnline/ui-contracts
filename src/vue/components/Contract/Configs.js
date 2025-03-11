@@ -1,4 +1,4 @@
-import getModelConfigs from "@controleonline/ui-crm/src/components/Model/Configs";
+import getModelConfigs from "@controleonline/ui-crm/src/vue/components/Model/Configs";
 
 export default function getConfigs(context, myCompany, $components, $store) {
   return {
