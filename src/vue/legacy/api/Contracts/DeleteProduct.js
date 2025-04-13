@@ -14,8 +14,8 @@ export default class DeleteProduct extends Resource {
         else {
           return response
             .then(responseJson => {
-              if (responseJson['@type'] === 'hydra:Error') {
-                let message = responseJson['hydra:description'];
+              if (responseJson['@type'] === 'Error') {
+                let message = responseJson['description'];
 
                 throw new Error(message);
               }

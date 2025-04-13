@@ -11,8 +11,8 @@ export default class GetAll extends Resource {
         if (response.ok) {
           return response
             .then(data => {
-              if (data['hydra:member']) {
-                return data['hydra:member']
+              if (data['member']) {
+                return data['member']
               }
               return null;
             });

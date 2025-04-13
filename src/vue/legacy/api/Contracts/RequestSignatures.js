@@ -21,8 +21,8 @@ export default class RequestSignatures extends Resource {
               if (responseJson.response && responseJson.response.error) {
                 throw new Errors.ValidationError(responseJson.response.error);
               } else
-                if (responseJson['@type'] === 'hydra:Error') {
-                  let message = responseJson['hydra:description'];
+                if (responseJson['@type'] === 'Error') {
+                  let message = responseJson['description'];
 
                   throw new Errors.ValidationError(message);
                 }

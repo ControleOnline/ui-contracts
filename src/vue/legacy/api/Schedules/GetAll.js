@@ -11,10 +11,10 @@ export default class GetAll extends Resource {
         if (response.ok) {
           return response
             .then(data => {
-              if (data['hydra:member']) {
+              if (data['member']) {
                 return {
-                  members: data['hydra:member'],
-                  total  : data['hydra:totalItems']
+                  members: data['member'],
+                  total  : data['totalItems']
                 }
               }
               return null;
