@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   Text,
   View,
@@ -7,25 +7,31 @@ import {
   SafeAreaView,
   ActivityIndicator,
   StyleSheet,
+  TextInput,
 } from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {getStore} from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import CreateContractModal from '../components/CreateContractModal';
 
-const Contracts = ({client}) => {
+const ContractsPage = () => {
   const {getters: contractGetters, actions: contractActions} =
     getStore('contract');
   const {items: contracts, isLoading, error} = contractGetters;
   const navigation = useNavigation();
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [search, setSearch] = useState('');
 
   useFocusEffect(
     useCallback(() => {
-      contractActions.getItems({
-        beneficiary: client.id,
-        'contractModel.context': 'contract',
-      });
-    }, [client]),
+      contractActions.getItems();
+    }, []),
   );
+
+  const handleCreateSuccess = () => {
+    // Recarregar a lista de contratos após criar um novo
+    contractActions.getItems();
+  };
 
   const getStatusColor = status => {
     switch (status?.toLowerCase()) {
@@ -99,13 +105,81 @@ const Contracts = ({client}) => {
 
   return (
     <SafeAreaView style={contractStyles.container}>
-      <View style={contractStyles.header}>
-        <Text style={contractStyles.headerTitle}>Contratos</Text>
-        <Text style={contractStyles.headerSubtitle}>
-          {contracts.length} contrato{contracts.length !== 1 ? 's' : ''}
-        </Text>
+      {/* Header com botão de criar */}
+      <View
+        style={{
+          backgroundColor: '#fff',
+          paddingHorizontal: 20,
+          paddingVertical: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: '#e9ecef',
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.05,
+          shadowRadius: 3,
+          elevation: 2,
+          margin: 20,
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+          }}>
+          <View
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#f8f9fa',
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              borderWidth: 1,
+              borderColor: '#e9ecef',
+            }}>
+            <Icon name="search" size={20} color="#6c757d" />
+            <TextInput
+              placeholder="Buscar cliente..."
+              value={search}
+              onChangeText={setSearch}
+              style={{
+                flex: 1,
+                paddingVertical: 12,
+                paddingHorizontal: 12,
+                color: '#212529',
+                fontSize: 16,
+                width: '100%',
+              }}
+              placeholderTextColor="#6c757d"
+            />
+          </View>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#2529a1',
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              borderRadius: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              elevation: 2,
+              shadowColor: '#2529a1',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+            }}
+            onPress={() => setCreateModalVisible(true)}>
+            <Icon
+              name="add"
+              size={20}
+              color="#FFFFFF"
+              style={{marginRight: 4}}
+            />
+            <Text style={{color: '#FFFFFF', fontWeight: '600', fontSize: 14}}>
+              Criar
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
       {isLoading ? (
         <View style={contractStyles.centerContent}>
           <ActivityIndicator size="large" color="#2529a1" />
@@ -139,6 +213,12 @@ const Contracts = ({client}) => {
           <View style={contractStyles.bottomPadding} />
         </ScrollView>
       )}
+
+      <CreateContractModal
+        visible={createModalVisible}
+        onClose={() => setCreateModalVisible(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </SafeAreaView>
   );
 };
@@ -309,4 +389,4 @@ const contractStyles = StyleSheet.create({
   },
 });
 
-export default Contracts;
+export default ContractsPage;
