@@ -17,6 +17,7 @@ const CreateContractModal = ({visible, onClose, onSuccess}) => {
   const {actions: contractActions} = getStore('contract');
   const {getters: peopleGetters, actions: peopleActions} = getStore('people');
   const {getters: statusGetters, actions: statusActions} = getStore('status');
+  const {getters: modelsGetters, actions: modelsActions} = getStore('models');
 
   const {items: people, currentCompany} = peopleGetters;
   const {items: status} = statusGetters;
@@ -65,37 +66,10 @@ const CreateContractModal = ({visible, onClose, onSuccess}) => {
   const loadContractModels = async () => {
     setLoadingModels(true);
     try {
-      // Simulando busca de modelos - você pode ajustar conforme sua API
-      const response = await contractActions.getItems({
-        'contractModel.context': 'contract',
-        limit: 100,
-      });
+      const response = await modelsActions.getItems({context: 'contract'});
 
-      // Extrair modelos únicos
-      const uniqueModels = [];
-      const modelIds = new Set();
-
-      if (response && Array.isArray(response)) {
-        response.forEach(contract => {
-          if (
-            contract.contractModel &&
-            !modelIds.has(contract.contractModel['@id'])
-          ) {
-            modelIds.add(contract.contractModel['@id']);
-            uniqueModels.push(contract.contractModel);
-          }
-        });
-      }
-
-      setContractModels(uniqueModels);
+      setContractModels(response);
     } catch (error) {
-      console.error('Erro ao carregar modelos:', error);
-      // Fallback com modelos mock se necessário
-      setContractModels([
-        {'@id': '/contract-models/1', model: 'Contrato de Serviços'},
-        {'@id': '/contract-models/2', model: 'Contrato de Locação'},
-        {'@id': '/contract-models/3', model: 'Contrato de Compra e Venda'},
-      ]);
     } finally {
       setLoadingModels(false);
     }

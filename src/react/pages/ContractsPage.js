@@ -209,7 +209,9 @@ const ContractsPage = () => {
         <ScrollView
           style={contractStyles.scrollView}
           showsVerticalScrollIndicator={false}>
-          {contracts.map(renderContract)}
+          {contracts
+            .filter(contract => contract.contractModel.context === 'contract')
+            .map(renderContract)}
           <View style={contractStyles.bottomPadding} />
         </ScrollView>
       )}
