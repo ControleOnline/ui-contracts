@@ -8,12 +8,14 @@ import {
   ActivityIndicator,
   TextInput,
   Modal,
+  Dimensions,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {getStore} from '@store';
 import css from '@controleonline/ui-orders/src/react/css/orders';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {Picker} from '@react-native-picker/picker';
+import RenderHTML from 'react-native-render-html';
 
 const ContractDetails = () => {
   const {styles, globalStyles} = css();
@@ -38,6 +40,15 @@ const ContractDetails = () => {
   const [editedBeneficiary, setEditedBeneficiary] = useState('');
   const [editedStartDate, setEditedStartDate] = useState('');
   const [editedEndDate, setEditedEndDate] = useState('');
+  const {width} = Dimensions.get('window');
+
+  // Estados para os componentes de data separados
+  const [startDay, setStartDay] = useState('');
+  const [startMonth, setStartMonth] = useState('');
+  const [startYear, setStartYear] = useState('');
+  const [endDay, setEndDay] = useState('');
+  const [endMonth, setEndMonth] = useState('');
+  const [endYear, setEndYear] = useState('');
   const [editedStatus, setEditedStatus] = useState('');
   const [beneficiaryPickerVisible, setBeneficiaryPickerVisible] =
     useState(false);
@@ -46,6 +57,9 @@ const ContractDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const {contractId} = route.params;
+
+  // Check if contract can be edited (only when status is 'open')
+  const canEdit = contract?.status?.status?.toLowerCase() === 'open';
 
   useEffect(() => {
     contractActions.get(contractId).then(d => {
@@ -60,6 +74,20 @@ const ContractDetails = () => {
       setEditedStartDate(d.startDate || '');
       setEditedEndDate(d.endDate || '');
       setEditedStatus(d.status?.['@id'] || '');
+
+      // Inicializar componentes de data separados
+      if (d.startDate) {
+        const startDate = new Date(d.startDate);
+        setStartDay(startDate.getDate().toString());
+        setStartMonth((startDate.getMonth() + 1).toString());
+        setStartYear(startDate.getFullYear().toString());
+      }
+      if (d.endDate) {
+        const endDate = new Date(d.endDate);
+        setEndDay(endDate.getDate().toString());
+        setEndMonth((endDate.getMonth() + 1).toString());
+        setEndYear(endDate.getFullYear().toString());
+      }
     });
     statusActions.getItems({context: 'relationship'});
 
@@ -67,15 +95,14 @@ const ContractDetails = () => {
       company: '/people/' + currentCompany.id,
       link_type: 'client',
     });
-  }, [currentCompany.id]);
+  }, [contractId, currentCompany.id]);
 
   const fetchContractFile = useCallback(async fileId => {
     setFileLoading(true);
     setFileError(null);
     try {
       const response = await contractActions.getFileAsHtml(fileId);
-      console.log(response);
-      setFileContent(response.html || '');
+      setFileContent(response.content || '');
     } catch (err) {
       setFileError('Erro ao carregar o conteúdo HTML do contrato.');
     } finally {
@@ -143,11 +170,26 @@ const ContractDetails = () => {
 
   const handleSaveContractDetails = async () => {
     try {
+      let formattedStartDate = '';
+      let formattedEndDate = '';
+
+      if (startDay && startMonth && startYear) {
+        formattedStartDate = `${startYear}-${startMonth.padStart(
+          2,
+          '0',
+        )}-${startDay.padStart(2, '0')}`;
+      }
+
+      if (endDay && endMonth && endYear) {
+        formattedEndDate = `${endYear}-${endMonth.padStart(
+          2,
+          '0',
+        )}-${endDay.padStart(2, '0')}`;
+      }
+
       const updatedData = {
-        beneficiary: editedBeneficiary,
-        startDate: editedStartDate,
-        endDate: editedEndDate,
-        status: editedStatus,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
         id: contractId,
       };
       await contractActions.save(updatedData);
@@ -165,6 +207,29 @@ const ContractDetails = () => {
     setEditedStartDate(contract.startDate || '');
     setEditedEndDate(contract.endDate || '');
     setEditedStatus(contract.status?.['@id'] || '');
+
+    // Resetar componentes de data separados
+    if (contract.startDate) {
+      const startDate = new Date(contract.startDate);
+      setStartDay(startDate.getDate().toString());
+      setStartMonth((startDate.getMonth() + 1).toString());
+      setStartYear(startDate.getFullYear().toString());
+    } else {
+      setStartDay('');
+      setStartMonth('');
+      setStartYear('');
+    }
+
+    if (contract.endDate) {
+      const endDate = new Date(contract.endDate);
+      setEndDay(endDate.getDate().toString());
+      setEndMonth((endDate.getMonth() + 1).toString());
+      setEndYear(endDate.getFullYear().toString());
+    } else {
+      setEndDay('');
+      setEndMonth('');
+      setEndYear('');
+    }
   };
 
   const renderEditModal = () => (
@@ -185,75 +250,128 @@ const ContractDetails = () => {
           </View>
 
           <ScrollView style={modalStyles.editModalBody}>
-            {/* Beneficiário */}
-            <View style={modalStyles.inputGroup}>
-              <Text style={modalStyles.inputLabel}>Beneficiário</Text>
-              <TouchableOpacity
-                style={modalStyles.selectInput}
-                onPress={() => setBeneficiaryPickerVisible(true)}>
-                <View style={modalStyles.selectInputContent}>
-                  <Icon
-                    name="person"
-                    size={20}
-                    color="#2529a1"
-                    style={{marginRight: 8}}
-                  />
-                  <Text
-                    style={[
-                      modalStyles.selectInputText,
-                      {color: editedBeneficiary ? '#1A1A1A' : '#999999'},
-                    ]}>
-                    {editedBeneficiary
-                      ? people &&
-                        people.find(p => p['@id'] === editedBeneficiary)?.name
-                      : 'Selecionar beneficiário'}
-                  </Text>
-                </View>
-                <Icon name="keyboard-arrow-down" size={24} color="#666666" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Status */}
-            <View style={modalStyles.inputGroup}>
-              <Text style={modalStyles.inputLabel}>Status</Text>
-              <View style={modalStyles.pickerContainer}>
-                <Picker
-                  selectedValue={editedStatus}
-                  style={modalStyles.picker}
-                  onValueChange={itemValue => setEditedStatus(itemValue)}>
-                  {status.map(statusItem => (
-                    <Picker.Item
-                      key={statusItem['@id']}
-                      label={statusItem.realStatus}
-                      value={statusItem['@id']}
-                    />
-                  ))}
-                </Picker>
-              </View>
-            </View>
-
             {/* Data de Início */}
             <View style={modalStyles.inputGroup}>
               <Text style={modalStyles.inputLabel}>Data de Início</Text>
-              <TextInput
-                style={modalStyles.textInput}
-                value={editedStartDate}
-                onChangeText={setEditedStartDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#999999"
-              />
+              <View style={modalStyles.dateContainer}>
+                <View style={modalStyles.datePickerContainer}>
+                  <Text style={modalStyles.dateLabel}>Dia</Text>
+                  <View style={modalStyles.pickerContainer}>
+                    <Picker
+                      selectedValue={startDay}
+                      style={modalStyles.datePicker}
+                      onValueChange={itemValue => setStartDay(itemValue)}>
+                      <Picker.Item label="Dia" value="" />
+                      {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                        <Picker.Item
+                          key={day}
+                          label={day.toString()}
+                          value={day.toString()}
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+                </View>
+
+                <View style={modalStyles.datePickerContainer}>
+                  <Text style={modalStyles.dateLabel}>Mês</Text>
+                  <View style={modalStyles.pickerContainer}>
+                    <Picker
+                      selectedValue={startMonth}
+                      style={modalStyles.datePicker}
+                      onValueChange={itemValue => setStartMonth(itemValue)}>
+                      <Picker.Item label="Mês" value="" />
+                      <Picker.Item label="Janeiro" value="1" />
+                      <Picker.Item label="Fevereiro" value="2" />
+                      <Picker.Item label="Março" value="3" />
+                      <Picker.Item label="Abril" value="4" />
+                      <Picker.Item label="Maio" value="5" />
+                      <Picker.Item label="Junho" value="6" />
+                      <Picker.Item label="Julho" value="7" />
+                      <Picker.Item label="Agosto" value="8" />
+                      <Picker.Item label="Setembro" value="9" />
+                      <Picker.Item label="Outubro" value="10" />
+                      <Picker.Item label="Novembro" value="11" />
+                      <Picker.Item label="Dezembro" value="12" />
+                    </Picker>
+                  </View>
+                </View>
+
+                <View style={modalStyles.datePickerContainer}>
+                  <Text style={modalStyles.dateLabel}>Ano</Text>
+                  <TextInput
+                    style={modalStyles.yearInput}
+                    value={startYear}
+                    onChangeText={setStartYear}
+                    placeholder="Ano"
+                    placeholderTextColor="#999999"
+                    keyboardType="numeric"
+                    maxLength={4}
+                  />
+                </View>
+              </View>
             </View>
 
             {/* Data de Término */}
             <View style={modalStyles.inputGroup}>
               <Text style={modalStyles.inputLabel}>Data de Término</Text>
-              <TextInput
-                style={modalStyles.textInput}
-                value={editedEndDate}
-                onChangeText={setEditedEndDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#999999"
-              />
+              <View style={modalStyles.dateContainer}>
+                <View style={modalStyles.datePickerContainer}>
+                  <Text style={modalStyles.dateLabel}>Dia</Text>
+                  <View style={modalStyles.pickerContainer}>
+                    <Picker
+                      selectedValue={endDay}
+                      style={modalStyles.datePicker}
+                      onValueChange={itemValue => setEndDay(itemValue)}>
+                      <Picker.Item label="Dia" value="" />
+                      {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                        <Picker.Item
+                          key={day}
+                          label={day.toString()}
+                          value={day.toString()}
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+                </View>
+
+                <View style={modalStyles.datePickerContainer}>
+                  <Text style={modalStyles.dateLabel}>Mês</Text>
+                  <View style={modalStyles.pickerContainer}>
+                    <Picker
+                      selectedValue={endMonth}
+                      style={modalStyles.datePicker}
+                      onValueChange={itemValue => setEndMonth(itemValue)}>
+                      <Picker.Item label="Mês" value="" />
+                      <Picker.Item label="Janeiro" value="1" />
+                      <Picker.Item label="Fevereiro" value="2" />
+                      <Picker.Item label="Março" value="3" />
+                      <Picker.Item label="Abril" value="4" />
+                      <Picker.Item label="Maio" value="5" />
+                      <Picker.Item label="Junho" value="6" />
+                      <Picker.Item label="Julho" value="7" />
+                      <Picker.Item label="Agosto" value="8" />
+                      <Picker.Item label="Setembro" value="9" />
+                      <Picker.Item label="Outubro" value="10" />
+                      <Picker.Item label="Novembro" value="11" />
+                      <Picker.Item label="Dezembro" value="12" />
+                    </Picker>
+                  </View>
+                </View>
+
+                <View style={modalStyles.datePickerContainer}>
+                  <Text style={modalStyles.dateLabel}>Ano</Text>
+                  <TextInput
+                    style={modalStyles.yearInput}
+                    value={endYear}
+                    onChangeText={setEndYear}
+                    placeholder="Ano"
+                    placeholderTextColor="#999999"
+                    keyboardType="numeric"
+                    maxLength={4}
+                  />
+                </View>
+              </View>
             </View>
           </ScrollView>
 
@@ -520,46 +638,29 @@ const ContractDetails = () => {
               ]}>
               {contract.contractModel?.model}
             </Text>
-            <TouchableOpacity
-              onPress={() => setEditModalVisible(true)}
-              style={{
-                backgroundColor: '#2529a1',
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 6,
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}>
-              <Icon
-                name="edit"
-                size={16}
-                color="#FFFFFF"
-                style={{marginRight: 4}}
-              />
-              <Text style={{color: '#FFFFFF', fontWeight: '600', fontSize: 12}}>
-                Editar
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Beneficiário */}
-          <View style={{marginBottom: 12}}>
-            <Text
-              style={{
-                color: '#666666',
-                fontSize: 14,
-                fontWeight: '500',
-                marginBottom: 4,
-              }}>
-              Beneficiário
-            </Text>
-            <Text
-              style={[
-                styles.contractDetail,
-                {color: '#1A1A1A', fontSize: 16, fontWeight: '400'},
-              ]}>
-              {contract.beneficiary?.name}
-            </Text>
+            {canEdit && (
+              <TouchableOpacity
+                onPress={() => setEditModalVisible(true)}
+                style={{
+                  backgroundColor: '#2529a1',
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 6,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
+                <Icon
+                  name="edit"
+                  size={16}
+                  color="#FFFFFF"
+                  style={{marginRight: 4}}
+                />
+                <Text
+                  style={{color: '#FFFFFF', fontWeight: '600', fontSize: 12}}>
+                  Editar
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Status */}
@@ -652,101 +753,103 @@ const ContractDetails = () => {
           </Text>
 
           {/* Add Subscriber Form */}
-          <View
-            style={{
-              backgroundColor: '#F8F9FA',
-              borderRadius: 8,
-              padding: 16,
-              marginBottom: 16,
-            }}>
-            <Text
-              style={{
-                color: '#1A1A1A',
-                fontSize: 16,
-                fontWeight: '500',
-                marginBottom: 12,
-              }}>
-              Adicionar Novo Assinante
-            </Text>
-
-            <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                borderWidth: 1,
-                borderColor: '#E0E0E0',
-                borderRadius: 8,
-                paddingHorizontal: 12,
-                paddingVertical: 12,
-                backgroundColor: '#FFFFFF',
-                marginBottom: 12,
-              }}
-              onPress={() => setPeoplePickerVisible(true)}>
-              <View
-                style={{flexDirection: 'row', alignItems: 'center', flex: 1}}>
-                <Icon
-                  name="person"
-                  size={20}
-                  color="#2529a1"
-                  style={{marginRight: 8}}
-                />
-                <Text
-                  style={{
-                    color: selectedPerson ? '#1A1A1A' : '#999999',
-                    fontSize: 16,
-                  }}>
-                  {selectedPerson
-                    ? people &&
-                      people.find(p => p['@id'] === selectedPerson)?.name
-                    : 'Selecionar pessoa'}
-                </Text>
-              </View>
-              <Icon name="keyboard-arrow-down" size={24} color="#666666" />
-            </TouchableOpacity>
-
-            {/* Role Selection */}
+          {canEdit && (
             <View
               style={{
-                borderWidth: 1,
-                borderColor: '#E0E0E0',
+                backgroundColor: '#F8F9FA',
                 borderRadius: 8,
-                backgroundColor: '#FFFFFF',
-                marginBottom: 12,
+                padding: 16,
+                marginBottom: 16,
               }}>
-              <Picker
-                selectedValue={newSubscriberRole}
-                style={{color: '#1A1A1A'}}
-                onValueChange={itemValue => setNewSubscriberRole(itemValue)}>
-                <Picker.Item label="Contractor" value="Contractor" />
-                <Picker.Item label="Witness" value="Witness" />
-              </Picker>
-            </View>
-
-            <TouchableOpacity
-              style={{
-                backgroundColor: selectedPerson ? '#2529a1' : '#CCCCCC',
-                padding: 14,
-                borderRadius: 8,
-                alignItems: 'center',
-                elevation: selectedPerson ? 2 : 0,
-                shadowColor: '#2529a1',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: selectedPerson ? 0.3 : 0,
-                shadowRadius: 4,
-              }}
-              onPress={handleAddSubscriber}
-              disabled={!selectedPerson}>
               <Text
                 style={{
-                  color: '#FFFFFF',
-                  fontWeight: '600',
+                  color: '#1A1A1A',
                   fontSize: 16,
+                  fontWeight: '500',
+                  marginBottom: 12,
                 }}>
-                Adicionar Assinante
+                Adicionar Novo Assinante
               </Text>
-            </TouchableOpacity>
-          </View>
+
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderWidth: 1,
+                  borderColor: '#E0E0E0',
+                  borderRadius: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 12,
+                  backgroundColor: '#FFFFFF',
+                  marginBottom: 12,
+                }}
+                onPress={() => setPeoplePickerVisible(true)}>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', flex: 1}}>
+                  <Icon
+                    name="person"
+                    size={20}
+                    color="#2529a1"
+                    style={{marginRight: 8}}
+                  />
+                  <Text
+                    style={{
+                      color: selectedPerson ? '#1A1A1A' : '#999999',
+                      fontSize: 16,
+                    }}>
+                    {selectedPerson
+                      ? people &&
+                        people.find(p => p['@id'] === selectedPerson)?.name
+                      : 'Selecionar pessoa'}
+                  </Text>
+                </View>
+                <Icon name="keyboard-arrow-down" size={24} color="#666666" />
+              </TouchableOpacity>
+
+              {/* Role Selection */}
+              <View
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#E0E0E0',
+                  borderRadius: 8,
+                  backgroundColor: '#FFFFFF',
+                  marginBottom: 12,
+                }}>
+                <Picker
+                  selectedValue={newSubscriberRole}
+                  style={{color: '#1A1A1A'}}
+                  onValueChange={itemValue => setNewSubscriberRole(itemValue)}>
+                  <Picker.Item label="Contractor" value="Contractor" />
+                  <Picker.Item label="Witness" value="Witness" />
+                </Picker>
+              </View>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: selectedPerson ? '#2529a1' : '#CCCCCC',
+                  padding: 14,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                  elevation: selectedPerson ? 2 : 0,
+                  shadowColor: '#2529a1',
+                  shadowOffset: {width: 0, height: 2},
+                  shadowOpacity: selectedPerson ? 0.3 : 0,
+                  shadowRadius: 4,
+                }}
+                onPress={handleAddSubscriber}
+                disabled={!selectedPerson}>
+                <Text
+                  style={{
+                    color: '#FFFFFF',
+                    fontWeight: '600',
+                    fontSize: 16,
+                  }}>
+                  Adicionar Assinante
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {subscribers.length === 0 ? (
             <View
@@ -806,33 +909,38 @@ const ContractDetails = () => {
                     </Text>
                   )}
                 </View>
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: '#FF4444',
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 6,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                  onPress={() => handleRemoveSubscriber(subscriber.id)}>
-                  <Icon
-                    name="delete"
-                    size={16}
-                    color="#FFFFFF"
-                    style={{marginRight: 4}}
-                  />
-                  <Text
-                    style={{color: '#FFFFFF', fontWeight: '600', fontSize: 14}}>
-                    Remover
-                  </Text>
-                </TouchableOpacity>
+                {canEdit && (
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: '#FF4444',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 6,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                    onPress={() => handleRemoveSubscriber(subscriber.id)}>
+                    <Icon
+                      name="delete"
+                      size={16}
+                      color="#FFFFFF"
+                      style={{marginRight: 4}}
+                    />
+                    <Text
+                      style={{
+                        color: '#FFFFFF',
+                        fontWeight: '600',
+                        fontSize: 14,
+                      }}>
+                      Remover
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             ))
           )}
         </View>
 
-        {/* Contract Content Section */}
         {contract.contractFile && (
           <View
             style={{
@@ -882,76 +990,104 @@ const ContractDetails = () => {
               </View>
             )}
 
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: '#E0E0E0',
-                borderRadius: 8,
-                padding: 16,
-                color: '#1A1A1A',
-                minHeight: 200,
-                marginBottom: 16,
-                textAlignVertical: 'top',
-                fontFamily: 'monospace',
-                backgroundColor: '#FAFAFA',
-                fontSize: 14,
-                lineHeight: 20,
-              }}
-              multiline
-              value={fileContent}
-              onChangeText={setFileContent}
-              placeholder="Conteúdo HTML do contrato..."
-              placeholderTextColor="#999999"
-            />
+            <ScrollView style={{flex: 1, padding: 16}}>
+              <RenderHTML contentWidth={width} source={{html: fileContent}} />
+            </ScrollView>
 
-            <TouchableOpacity
-              style={{
-                backgroundColor: '#4CAF50',
-                padding: 14,
-                borderRadius: 8,
-                alignItems: 'center',
-                elevation: 2,
-                shadowColor: '#4CAF50',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.3,
-                shadowRadius: 4,
-              }}
-              onPress={handleSaveContent}>
-              <Text style={{color: '#FFFFFF', fontWeight: '600', fontSize: 16}}>
-                Salvar Alterações
-              </Text>
-            </TouchableOpacity>
+            {canEdit && (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#4CAF50',
+                  padding: 14,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                  elevation: 2,
+                  shadowColor: '#4CAF50',
+                  shadowOffset: {width: 0, height: 2},
+                  shadowOpacity: 0.3,
+                  shadowRadius: 4,
+                }}
+                onPress={handleSaveContent}>
+                <Text
+                  style={{color: '#FFFFFF', fontWeight: '600', fontSize: 16}}>
+                  Salvar Alterações
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
         {/* Sign Contract Button */}
-        <View style={{margin: 16, marginTop: 0, marginBottom: 32}}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#2529a1',
-              padding: 18,
-              borderRadius: 12,
-              alignItems: 'center',
-              elevation: 4,
-              shadowColor: '#2529a1',
-              shadowOffset: {width: 0, height: 4},
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-            }}
-            onPress={handleSignContract}>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        {canEdit && (
+          <View style={{margin: 16, marginTop: 0, marginBottom: 32}}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#2529a1',
+                padding: 18,
+                borderRadius: 12,
+                alignItems: 'center',
+                elevation: 4,
+                shadowColor: '#2529a1',
+                shadowOffset: {width: 0, height: 4},
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+              }}
+              onPress={handleSignContract}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Icon
+                  name="edit"
+                  size={20}
+                  color="#FFFFFF"
+                  style={{marginRight: 8}}
+                />
+                <Text
+                  style={{color: '#FFFFFF', fontWeight: '700', fontSize: 18}}>
+                  Assinar Contrato
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Status message when contract cannot be edited */}
+        {!canEdit && (
+          <View style={{margin: 16, marginTop: 0, marginBottom: 32}}>
+            <View
+              style={{
+                backgroundColor: '#FFF3CD',
+                padding: 16,
+                borderRadius: 8,
+                borderLeftWidth: 4,
+                borderLeftColor: '#FFC107',
+                alignItems: 'center',
+              }}>
               <Icon
-                name="edit"
-                size={20}
-                color="#FFFFFF"
-                style={{marginRight: 8}}
+                name="info"
+                size={24}
+                color="#856404"
+                style={{marginBottom: 8}}
               />
-              <Text style={{color: '#FFFFFF', fontWeight: '700', fontSize: 18}}>
-                Assinar Contrato
+              <Text
+                style={{
+                  color: '#856404',
+                  fontSize: 16,
+                  fontWeight: '600',
+                  textAlign: 'center',
+                }}>
+                Este contrato não pode ser editado
+              </Text>
+              <Text
+                style={{
+                  color: '#856404',
+                  fontSize: 14,
+                  textAlign: 'center',
+                  marginTop: 4,
+                }}>
+                Status atual: {contract?.status?.status}
               </Text>
             </View>
-          </TouchableOpacity>
-        </View>
+          </View>
+        )}
       </ScrollView>
 
       {/* Modal de edição */}
@@ -983,7 +1119,7 @@ const modalStyles = {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     width: '90%',
-    maxHeight: '80%',
+    maxHeight: '90%',
   },
   editModalBody: {
     padding: 20,
@@ -1042,6 +1178,35 @@ const modalStyles = {
   },
   picker: {
     color: '#1A1A1A',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  datePickerContainer: {
+    flex: 1,
+  },
+  dateLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#666666',
+    marginBottom: 4,
+  },
+  datePicker: {
+    color: '#1A1A1A',
+    height: 50,
+  },
+  yearInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    color: '#1A1A1A',
+    fontSize: 16,
+    backgroundColor: '#FFFFFF',
+    textAlign: 'center',
   },
   saveButton: {
     flex: 1,

@@ -13,6 +13,8 @@ import {getStore} from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Contracts = ({client}) => {
+  const {getters: peopleGetters} = getStore('people');
+  const {currentCompany} = peopleGetters;
   const {getters: contractGetters, actions: contractActions} =
     getStore('contract');
   const {items: contracts, isLoading, error} = contractGetters;
@@ -21,10 +23,11 @@ const Contracts = ({client}) => {
   useFocusEffect(
     useCallback(() => {
       contractActions.getItems({
-        beneficiary: client.id,
+        beneficiary: currentCompany.id,
         'contractModel.context': 'contract',
+        'peoples.people.id': client.id,
       });
-    }, [client]),
+    }, [client, currentCompany]),
   );
 
   const getStatusColor = status => {
