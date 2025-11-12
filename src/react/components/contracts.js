@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useState, useEffect} from 'react';
 import {
   Text,
   View,
@@ -7,6 +7,8 @@ import {
   SafeAreaView,
   ActivityIndicator,
   StyleSheet,
+  TextInput,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {getStore} from '@store';
@@ -14,21 +16,39 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Contracts = ({client}) => {
   const {getters: peopleGetters} = getStore('people');
-  const {currentCompany} = peopleGetters;
   const {getters: contractGetters, actions: contractActions} =
     getStore('contract');
-  const {items: contracts, isLoading, error} = contractGetters;
+  const {items: contracts, totalItems, isLoading, error} = contractGetters;
   const navigation = useNavigation();
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [showItemsPerPageDropdown, setShowItemsPerPageDropdown] =
+    useState(false);
 
   useFocusEffect(
     useCallback(() => {
       contractActions.getItems({
-        beneficiary: currentCompany.id,
         'contractModel.context': 'contract',
-        'peoples.people.id': client.id,
+        'peoples.people.name': client.name,
+        page: currentPage,
+        itemsPerPage: itemsPerPage,
       });
-    }, [client, currentCompany]),
+    }, [client.name, currentPage, itemsPerPage]),
   );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
+
+  const filteredContracts = React.useMemo(() => {
+    if (!search.trim()) {
+      return contracts;
+    }
+    return contracts.filter(contract =>
+      contract.contractModel.model.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [contracts, search]);
 
   const getStatusColor = status => {
     switch (status?.toLowerCase()) {
@@ -102,12 +122,101 @@ const Contracts = ({client}) => {
 
   return (
     <SafeAreaView style={contractStyles.container}>
-      <View style={contractStyles.header}>
+      {/* Header com busca */}
+      <View
+        style={{
+          backgroundColor: '#fff',
+          paddingHorizontal: 20,
+          paddingVertical: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: '#e9ecef',
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.05,
+          shadowRadius: 3,
+          elevation: 2,
+        }}>
         <Text style={contractStyles.headerTitle}>Contratos</Text>
-        <Text style={contractStyles.headerSubtitle}>
-          {contracts.length} contrato{contracts.length !== 1 ? 's' : ''}
-        </Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#f8f9fa',
+            borderRadius: 12,
+            paddingHorizontal: 16,
+            borderWidth: 1,
+            borderColor: '#e9ecef',
+            marginTop: 12,
+          }}>
+          <Icon name="search" size={20} color="#6c757d" />
+          <TextInput
+            placeholder="Buscar por nome do contrato..."
+            value={search}
+            onChangeText={setSearch}
+            style={{
+              flex: 1,
+              paddingVertical: 12,
+              paddingHorizontal: 12,
+              color: '#212529',
+              fontSize: 16,
+            }}
+            placeholderTextColor="#6c757d"
+          />
+        </View>
       </View>
+
+      {!isLoading && contracts && contracts.length > 0 && !error && (
+        <View
+          style={{
+            backgroundColor: '#fff',
+            paddingHorizontal: 20,
+            paddingVertical: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: '#e9ecef',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+          <Text style={{color: '#6c757d', fontSize: 14}}>
+            Mostrando {filteredContracts.length} de {totalItems} contratos
+          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text style={{color: '#6c757d', fontSize: 14, marginRight: 8}}>
+              Por página:
+            </Text>
+            <View style={{position: 'relative'}}>
+              <TouchableOpacity
+                onPress={() =>
+                  setShowItemsPerPageDropdown(!showItemsPerPageDropdown)
+                }
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderWidth: 1,
+                  borderColor: '#e9ecef',
+                  borderRadius: 6,
+                  backgroundColor: '#f8f9fa',
+                  minWidth: 60,
+                }}>
+                <Text style={{color: '#495057', fontSize: 14, marginRight: 4}}>
+                  {itemsPerPage}
+                </Text>
+                <Icon
+                  name={
+                    showItemsPerPageDropdown
+                      ? 'keyboard-arrow-up'
+                      : 'keyboard-arrow-down'
+                  }
+                  size={16}
+                  color="#6c757d"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
 
       {isLoading ? (
         <View style={contractStyles.centerContent}>
@@ -138,9 +247,172 @@ const Contracts = ({client}) => {
         <ScrollView
           style={contractStyles.scrollView}
           showsVerticalScrollIndicator={false}>
-          {contracts.map(renderContract)}
+          {filteredContracts.map(renderContract)}
+
+          {/* Pagination Controls */}
+          {totalItems > itemsPerPage && (
+            <View
+              style={{
+                backgroundColor: '#fff',
+                marginHorizontal: 16,
+                marginTop: 16,
+                borderRadius: 16,
+                padding: 20,
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 3},
+                shadowOpacity: 0.08,
+                shadowRadius: 12,
+                elevation: 4,
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                <TouchableOpacity
+                  onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    backgroundColor: currentPage === 1 ? '#f8f9fa' : '#2529a1',
+                    opacity: currentPage === 1 ? 0.5 : 1,
+                  }}>
+                  <Icon
+                    name="chevron-left"
+                    size={20}
+                    color={currentPage === 1 ? '#6c757d' : '#fff'}
+                  />
+                  <Text
+                    style={{
+                      color: currentPage === 1 ? '#6c757d' : '#fff',
+                      marginLeft: 4,
+                      fontWeight: '600',
+                    }}>
+                    Anterior
+                  </Text>
+                </TouchableOpacity>
+
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <Text style={{color: '#6c757d', fontSize: 14}}>
+                    Página {currentPage} de{' '}
+                    {Math.ceil(totalItems / itemsPerPage)}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() =>
+                    setCurrentPage(prev =>
+                      Math.min(Math.ceil(totalItems / itemsPerPage), prev + 1),
+                    )
+                  }
+                  disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    backgroundColor:
+                      currentPage >= Math.ceil(totalItems / itemsPerPage)
+                        ? '#f8f9fa'
+                        : '#2529a1',
+                    opacity:
+                      currentPage >= Math.ceil(totalItems / itemsPerPage)
+                        ? 0.5
+                        : 1,
+                  }}>
+                  <Text
+                    style={{
+                      color:
+                        currentPage >= Math.ceil(totalItems / itemsPerPage)
+                          ? '#6c757d'
+                          : '#fff',
+                      marginRight: 4,
+                      fontWeight: '600',
+                    }}>
+                    Próxima
+                  </Text>
+                  <Icon
+                    name="chevron-right"
+                    size={20}
+                    color={
+                      currentPage >= Math.ceil(totalItems / itemsPerPage)
+                        ? '#6c757d'
+                        : '#fff'
+                    }
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
           <View style={contractStyles.bottomPadding} />
         </ScrollView>
+      )}
+
+      {/* Dropdown Overlay */}
+      {showItemsPerPageDropdown && (
+        <TouchableWithoutFeedback
+          onPress={() => setShowItemsPerPageDropdown(false)}>
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 998,
+            }}>
+            <View
+              style={{
+                position: 'absolute',
+                top: 180,
+                right: 20,
+                backgroundColor: '#fff',
+                borderWidth: 1,
+                borderColor: '#e9ecef',
+                borderRadius: 6,
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 2},
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 999,
+                zIndex: 999,
+              }}>
+              {[5, 10, 20, 50].map(size => (
+                <TouchableOpacity
+                  key={size}
+                  onPress={() => {
+                    setItemsPerPage(size);
+                    setCurrentPage(1);
+                    setShowItemsPerPageDropdown(false);
+                  }}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    backgroundColor:
+                      itemsPerPage === size ? '#f8f9fa' : 'transparent',
+                    borderBottomWidth: size !== 50 ? 1 : 0,
+                    borderBottomColor: '#f1f3f4',
+                  }}>
+                  <Text
+                    style={{
+                      color: itemsPerPage === size ? '#2529a1' : '#495057',
+                      fontSize: 14,
+                      fontWeight: itemsPerPage === size ? '600' : '400',
+                    }}>
+                    {size}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
       )}
     </SafeAreaView>
   );
