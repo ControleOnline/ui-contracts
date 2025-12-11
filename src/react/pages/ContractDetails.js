@@ -11,7 +11,7 @@ import {
   Dimensions,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {getStore} from '@store';
+import {useStores} from '@store';
 import css from '@controleonline/ui-orders/src/react/css/orders';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {Picker} from '@react-native-picker/picker';
@@ -19,13 +19,20 @@ import RenderHTML from 'react-native-render-html';
 
 const ContractDetails = () => {
   const {styles, globalStyles} = css();
-  const {getters: contractGetters, actions: contractActions} = getStore('contract');
-  const {actions: contractPeopleActions} = getStore('contract_peoples');
-  const {actions: peopleActions, getters: peopleGetters} = getStore('people');
+  const contractStore = useStores(state => state.contract);
+  const contractGetters = contractStore.getters;
+  const contractActions = contractStore.actions;
+  const contract_peoplesStore = useStores(state => state.contract_peoples);
+  const contractPeopleActions = contract_peoplesStore.actions;
+  const peopleStore = useStores(state => state.people);
+  const peopleActions = peopleStore.actions;
+  const peopleGetters = peopleStore.getters;
 
   const {item: contract, isLoading, error} = contractGetters;
   const {items: people, currentCompany} = peopleGetters;
-  const {getters: statusGetters, actions: statusActions} = getStore('status');
+  const statusStore = useStores(state => state.status);
+  const statusGetters = statusStore.getters;
+  const statusActions = statusStore.actions;
   const {items: status} = statusGetters;
   const [fileContent, setFileContent] = useState('');
   const [fileLoading, setFileLoading] = useState(false);

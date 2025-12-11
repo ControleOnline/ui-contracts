@@ -9,13 +9,16 @@ import {
   StyleSheet,
 } from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import {getStore} from '@store';
+import {useStores} from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Contracts = ({client}) => {
-  const {getters: peopleGetters} = getStore('people');
+  const peopleStore = useStores(state => state.people);
+  const peopleGetters = peopleStore.getters;
   const {currentCompany} = peopleGetters;
-  const {getters: contractGetters, actions: contractActions} = getStore('contract');
+  const contractStore = useStores(state => state.contract);
+  const contractGetters = contractStore.getters;
+  const contractActions = contractStore.actions;
   const {items: contracts, isLoading, error} = contractGetters;
   const navigation = useNavigation();
 
