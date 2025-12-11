@@ -15,8 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 const Contracts = ({client}) => {
   const {getters: peopleGetters} = getStore('people');
   const {currentCompany} = peopleGetters;
-  const {getters: contractGetters, actions: contractActions} =
-    getStore('contract');
+  const {getters: contractGetters, actions: contractActions} = getStore('contract');
   const {items: contracts, isLoading, error} = contractGetters;
   const navigation = useNavigation();
 

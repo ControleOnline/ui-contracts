@@ -18,8 +18,7 @@ import CreateContractModal from '../components/CreateContractModal';
 const ContractsPage = () => {
   const {getters: peopleGetters} = getStore('people');
   const {currentCompany} = peopleGetters;
-  const {getters: contractGetters, actions: contractActions} =
-    getStore('contract');
+  const {getters: contractGetters, actions: contractActions} = getStore('contract');
   const {items: contracts, totalItems, isLoading, error} = contractGetters;
   const navigation = useNavigation();
   const [createModalVisible, setCreateModalVisible] = useState(false);

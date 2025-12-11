@@ -19,8 +19,7 @@ import RenderHTML from 'react-native-render-html';
 
 const ContractDetails = () => {
   const {styles, globalStyles} = css();
-  const {getters: contractGetters, actions: contractActions} =
-    getStore('contract');
+  const {getters: contractGetters, actions: contractActions} = getStore('contract');
   const {actions: contractPeopleActions} = getStore('contract_peoples');
   const {actions: peopleActions, getters: peopleGetters} = getStore('people');
 
