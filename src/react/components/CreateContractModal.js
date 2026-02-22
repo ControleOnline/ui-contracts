@@ -220,7 +220,7 @@ const CreateContractModal = ({visible, onClose, onSuccess}) => {
                       : 'Selecionar modelo'}
                   </Text>
                 </View>
-                <Icon name="keyboard-arrow-down" size={24} color="#666666" />
+                <Icon name="expand-more" size={24} color="#666666" />
               </TouchableOpacity>
             </View>
 

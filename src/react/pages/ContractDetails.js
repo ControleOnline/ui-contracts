@@ -810,7 +810,7 @@ const ContractDetails = () => {
                       : 'Selecionar pessoa'}
                   </Text>
                 </View>
-                <Icon name="keyboard-arrow-down" size={24} color="#666666" />
+                <Icon name="chevron-down" size={24} color="#666666" />
               </TouchableOpacity>
 
               {/* Role Selection */}
