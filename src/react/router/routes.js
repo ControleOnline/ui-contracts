@@ -6,8 +6,8 @@ const contractRoutes = [
     component: Contract,
     options: {
       headerShown: false,
+      headerBackVisible: false,
       title: 'Contrato',
-      headerBackButtonMenuEnabled: false,
     },
   },
   
