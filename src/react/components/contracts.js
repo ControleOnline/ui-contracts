@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {
   Text,
   View,
@@ -21,15 +21,85 @@ const Contracts = ({client}) => {
   const contractActions = contractStore.actions;
   const {items: contracts, isLoading, error} = contractGetters;
   const navigation = useNavigation();
+  const clientId = String(
+    client?.id || client?.['@id']?.toString().replace(/\D/g, '') || '',
+  );
+  const clientIri = client?.['@id'] || (clientId ? `/people/${clientId}` : '');
+
+  const normalizeDigits = value => String(value || '').replace(/\D/g, '');
+
+  const getEntryIdentifiers = entry => {
+    const identifiers = [];
+    const people = entry?.people;
+
+    if (typeof people === 'string') {
+      identifiers.push(people);
+      const digits = normalizeDigits(people);
+      if (digits) {
+        identifiers.push(digits);
+      }
+    } else if (people && typeof people === 'object') {
+      if (people['@id']) {
+        identifiers.push(people['@id']);
+      }
+      if (people.id != null) {
+        identifiers.push(String(people.id));
+      }
+    }
+
+    if (entry?.peopleId != null) {
+      identifiers.push(String(entry.peopleId));
+    }
+
+    return identifiers;
+  };
+
+  const safeContracts = Array.isArray(contracts) ? contracts : [];
+  const contractsByClient = useMemo(() => {
+    if (!clientId) {
+      return safeContracts;
+    }
+
+    const hasInspectablePeople = safeContracts.some(contract =>
+      Array.isArray(contract?.peoples)
+        ? contract.peoples.some(entry => getEntryIdentifiers(entry).length > 0)
+        : false,
+    );
+
+    if (!hasInspectablePeople) {
+      return safeContracts;
+    }
+
+    return safeContracts.filter(contract =>
+      Array.isArray(contract?.peoples)
+        ? contract.peoples.some(entry =>
+            getEntryIdentifiers(entry).some(identifier => {
+              if (!identifier) {
+                return false;
+              }
+              return (
+                identifier === clientIri ||
+                normalizeDigits(identifier) === clientId
+              );
+            }),
+          )
+        : false,
+    );
+  }, [safeContracts, clientId, clientIri]);
 
   useFocusEffect(
     useCallback(() => {
+      if (!currentCompany?.id || !clientId) {
+        return;
+      }
+
       contractActions.getItems({
         beneficiary: currentCompany.id,
         'contractModel.context': 'contract',
-        'peoples.people.id': client.id,
+        'peoples.people': clientIri,
+        'peoples.people.id': clientId,
       });
-    }, [client, currentCompany]),
+    }, [currentCompany?.id, clientId, clientIri]),
   );
 
   const getStatusColor = status => {
@@ -107,7 +177,7 @@ const Contracts = ({client}) => {
       <View style={contractStyles.header}>
         <Text style={contractStyles.headerTitle}>Contratos</Text>
         <Text style={contractStyles.headerSubtitle}>
-          {contracts.length} contrato{contracts.length !== 1 ? 's' : ''}
+          {contractsByClient.length} contrato{contractsByClient.length !== 1 ? 's' : ''}
         </Text>
       </View>
 
@@ -126,7 +196,7 @@ const Contracts = ({client}) => {
           </Text>
           <Text style={contractStyles.errorDetail}>{error}</Text>
         </View>
-      ) : contracts.length === 0 ? (
+      ) : contractsByClient.length === 0 ? (
         <View style={contractStyles.centerContent}>
           <Icon name="description" size={48} color="#CCCCCC" />
           <Text style={contractStyles.emptyTitle}>
@@ -140,7 +210,7 @@ const Contracts = ({client}) => {
         <ScrollView
           style={contractStyles.scrollView}
           showsVerticalScrollIndicator={false}>
-          {contracts.map(renderContract)}
+          {contractsByClient.map(renderContract)}
           <View style={contractStyles.bottomPadding} />
         </ScrollView>
       )}

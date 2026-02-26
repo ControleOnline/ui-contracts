@@ -1,74 +1,109 @@
-import React, {useCallback, useState, useEffect} from 'react';
+import React, { useCallback, useState, useEffect, useLayoutEffect } from 'react';
 import {
   Text,
   View,
   TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
+  FlatList,
   ActivityIndicator,
   StyleSheet,
   TextInput,
-  TouchableWithoutFeedback,
+  RefreshControl,
 } from 'react-native';
-import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import {useStores} from '@store';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useStore } from '@store';
+import { colors } from '@controleonline/../../src/styles/colors';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import IconAdd from 'react-native-vector-icons/MaterialIcons';
 import CreateContractModal from '../components/CreateContractModal';
 
 const ContractsPage = () => {
-  const peopleStore = useStores(state => state.people);
-  const peopleGetters = peopleStore.getters;
-  const {currentCompany} = peopleGetters;
-  const contractStore = useStores(state => state.contract);
+  const peopleStore = useStore('people');
+  const { currentCompany } = peopleStore.getters;
+  const contractStore = useStore('contract');
   const contractGetters = contractStore.getters;
   const contractActions = contractStore.actions;
-  const {items: contracts, totalItems, isLoading, error} = contractGetters;
+  const { items: contracts, totalItems, isLoading, error } = contractGetters;
   const navigation = useNavigation();
   const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [search, setSearch] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [showItemsPerPageDropdown, setShowItemsPerPageDropdown] =
-    useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [allContracts, setAllContracts] = useState([]);
 
-  useFocusEffect(
-    useCallback(() => {
+  const fetchContracts = useCallback(
+    (query, page) => {
+      if (!currentCompany?.id) {
+        return;
+      }
+
       const params = {
         beneficiary: currentCompany.id,
         'contractModel.context': 'contract',
-        page: currentPage,
-        itemsPerPage: itemsPerPage,
+        page: page ?? currentPage,
+        itemsPerPage,
         contractModel: 'contract',
       };
 
-      // Adiciona o parâmetro de busca se houver
-      if (search.trim()) {
-        params['peoples.people.name'] = search.trim();
+      if (String(query ?? searchQuery).trim()) {
+        params['peoples.people.name'] = String(query ?? searchQuery).trim();
       }
 
       contractActions.getItems(params);
-    }, [currentCompany.id, currentPage, itemsPerPage, search]),
+    },
+    [currentCompany?.id, currentPage, itemsPerPage, searchQuery],
+  );
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Contratos',
+      headerRight: () => null,
+    });
+  }, [navigation]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearchQuery(searchText.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchText]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchContracts(searchQuery, currentPage);
+    }, [fetchContracts, searchQuery, currentPage]),
   );
 
   useEffect(() => {
+    if (isLoading) return;
+
+    if (contracts && Array.isArray(contracts)) {
+      if (currentPage === 1) {
+        setAllContracts(contracts);
+      } else {
+        setAllContracts(prev => {
+          const newIds = new Set(contracts.map(c => c.id));
+          const filteredPrev = prev.filter(p => !newIds.has(p.id));
+          return [...filteredPrev, ...contracts];
+        });
+      }
+    }
+  }, [contracts, currentPage, isLoading]);
+
+  useEffect(() => {
     setCurrentPage(1);
-  }, [search, itemsPerPage]);
+  }, [searchQuery, itemsPerPage]);
 
   const handleCreateSuccess = () => {
-    const params = {
-      beneficiary: currentCompany.id,
-      'contractModel.context': 'contract',
-      page: currentPage,
-      itemsPerPage: itemsPerPage,
-    };
-
-    // Adiciona o parâmetro de busca se houver
-    if (search.trim()) {
-      params['peoples.people.name'] = search.trim();
-    }
-
-    contractActions.getItems(params);
+    fetchContracts(searchQuery, 1);
+    setCurrentPage(1);
   };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchContracts(searchQuery, 1);
+    setCurrentPage(1);
+    setRefreshing(false);
+  }, [fetchContracts, searchQuery]);
 
   const getStatusColor = status => {
     switch (status?.toLowerCase()) {
@@ -84,7 +119,7 @@ const ContractsPage = () => {
   };
 
   // Usa apenas os contratos que vêm da API (já filtrados e paginados)
-  const paginatedContracts = contracts;
+  const safeContracts = allContracts;
 
   const renderContract = contract => (
     <View key={contract.id} style={contractStyles.contractCard}>
@@ -96,7 +131,7 @@ const ContractsPage = () => {
           <View
             style={[
               contractStyles.statusBadge,
-              {backgroundColor: getStatusColor(contract.status.status)},
+              { backgroundColor: getStatusColor(contract.status.status) },
             ]}>
             <Text style={contractStyles.statusText}>
               {contract.status.status}
@@ -106,43 +141,18 @@ const ContractsPage = () => {
       </View>
 
       <View style={contractStyles.contractBody}>
-        {/* People Section */}
-        {contract.peoples && contract.peoples.length > 0 && (
-          <View style={contractStyles.peopleSection}>
-            <View style={contractStyles.sectionHeader}>
-              <Icon name="people" size={16} color="#666" />
-              <Text style={contractStyles.sectionTitle}>Pessoas</Text>
-            </View>
-            {contract.peoples.map((contractPeople, index) => (
-              <View key={contractPeople.id} style={contractStyles.personItem}>
-                <View style={contractStyles.personInfo}>
-                  <Text style={contractStyles.personName}>
-                    {contractPeople.people.name}
-                  </Text>
-                  <Text style={contractStyles.personType}>
-                    {contractPeople.peopleType}
-                  </Text>
-                </View>
-                <View style={contractStyles.personTypeIndicator}>
-                  <Text style={contractStyles.personTypeText}>
-                    {contractPeople.people.peopleType === 'F' ? 'PF' : 'PJ'}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
+
 
         <View style={contractStyles.dateContainer}>
           <View style={contractStyles.dateItem}>
-            <Icon name="event" size={16} color="#666" />
+            <Icon name="calendar" size={16} color="#64748B" />
             <Text style={contractStyles.dateLabel}>Início</Text>
             <Text style={contractStyles.dateValue}>
               {new Date(contract.startDate).toLocaleDateString('pt-BR')}
             </Text>
           </View>
           <View style={contractStyles.dateItem}>
-            <Icon name="event-available" size={16} color="#666" />
+            <Icon name="calendar" size={16} color="#64748B" />
             <Text style={contractStyles.dateLabel}>Término</Text>
             <Text style={contractStyles.dateValue}>
               {new Date(contract.endDate).toLocaleDateString('pt-BR')}
@@ -154,364 +164,177 @@ const ContractsPage = () => {
       <TouchableOpacity
         style={contractStyles.viewButton}
         onPress={() =>
-          navigation.navigate('ContractDetails', {contractId: contract.id})
+          navigation.navigate('ContractDetails', { contractId: contract.id })
         }>
         <Text style={contractStyles.viewButtonText}>Ver Detalhes</Text>
-        <Icon name="arrow-forward" size={16} color="#FFFFFF" />
+        <Icon name="arrow-right" size={16} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <SafeAreaView style={contractStyles.container}>
-      {/* Header com botão de criar */}
-      <View
-        style={{
-          backgroundColor: '#fff',
-          paddingHorizontal: 20,
-          paddingVertical: 16,
-          borderBottomWidth: 1,
-          borderBottomColor: '#e9ecef',
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.05,
-          shadowRadius: 3,
-          elevation: 2,
-          margin: 20,
-        }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-          }}>
-          <View
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: '#f8f9fa',
-              borderRadius: 12,
-              paddingHorizontal: 16,
-              borderWidth: 1,
-              borderColor: '#e9ecef',
-            }}>
-            <Icon name="search" size={20} color="#6c757d" />
+    <View style={contractStyles.container}>
+      <View style={contractStyles.subHeader}>
+        <View style={contractStyles.searchRow}>
+          <View style={contractStyles.searchInputContainer}>
+            <Icon name="search" size={16} color="#94A3B8" />
             <TextInput
+              style={contractStyles.searchInput}
               placeholder="Buscar cliente..."
-              value={search}
-              onChangeText={setSearch}
-              style={{
-                flex: 1,
-                paddingVertical: 12,
-                paddingHorizontal: 12,
-                color: '#212529',
-                fontSize: 16,
-                width: '100%',
-              }}
-              placeholderTextColor="#6c757d"
+              placeholderTextColor="#94A3B8"
+              value={searchText}
+              onChangeText={setSearchText}
+              underlineColorAndroid="transparent"
             />
+            {searchText.length > 0 && (
+              <TouchableOpacity
+                onPress={() => setSearchText('')}
+                style={contractStyles.clearSearchButton}>
+                <Icon name="times-circle" size={16} color="#94A3B8" />
+              </TouchableOpacity>
+            )}
           </View>
           <TouchableOpacity
-            style={{
-              backgroundColor: '#2529a1',
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              borderRadius: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              elevation: 2,
-              shadowColor: '#2529a1',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-            }}
+            style={contractStyles.addButton}
             onPress={() => setCreateModalVisible(true)}>
-            <Icon
-              name="add"
-              size={20}
-              color="#FFFFFF"
-              style={{marginRight: 4}}
-            />
-            <Text style={{color: '#FFFFFF', fontWeight: '600', fontSize: 14}}>
-              Criar
-            </Text>
+            <IconAdd name="add" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
 
-      {!isLoading && contracts && contracts.length > 0 && !error && (
-        <View
-          style={{
-            backgroundColor: '#fff',
-            paddingHorizontal: 20,
-            paddingVertical: 12,
-            borderBottomWidth: 1,
-            borderBottomColor: '#e9ecef',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginHorizontal: 20,
-            marginBottom: 16,
-          }}>
-          <Text style={{color: '#6c757d', fontSize: 14}}>
-            Mostrando {paginatedContracts.length} de {totalItems} contratos
-          </Text>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text style={{color: '#6c757d', fontSize: 14, marginRight: 8}}>
-              Por página:
-            </Text>
-            <View style={{position: 'relative'}}>
-              <TouchableOpacity
-                onPress={() =>
-                  setShowItemsPerPageDropdown(!showItemsPerPageDropdown)
-                }
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  borderWidth: 1,
-                  borderColor: '#e9ecef',
-                  borderRadius: 6,
-                  backgroundColor: '#f8f9fa',
-                  minWidth: 60,
-                }}>
-                <Text style={{color: '#495057', fontSize: 14, marginRight: 4}}>
-                  {itemsPerPage}
-                </Text>
-                <Icon
-                  name={
-                    showItemsPerPageDropdown
-                      ? 'chevron-up'
-                      : 'chevron-down'
-                  }
-                  size={16}
-                  color="#6c757d"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {isLoading ? (
-        <View style={contractStyles.centerContent}>
-          <ActivityIndicator size="large" color="#2529a1" />
-          <Text style={contractStyles.loadingText}>
-            Carregando contratos...
-          </Text>
-        </View>
-      ) : error ? (
-        <View style={contractStyles.centerContent}>
-          <Icon name="error-outline" size={48} color="#F44336" />
-          <Text style={contractStyles.errorText}>
-            Erro ao carregar contratos
-          </Text>
-          <Text style={contractStyles.errorDetail}>{error}</Text>
-        </View>
-      ) : contracts.length === 0 ? (
-        <View style={contractStyles.centerContent}>
-          <Icon name="description" size={48} color="#CCCCCC" />
-          <Text style={contractStyles.emptyTitle}>
-            Nenhum contrato encontrado
-          </Text>
-          <Text style={contractStyles.emptySubtitle}>
-            Os contratos aparecerão aqui quando disponíveis
-          </Text>
-        </View>
-      ) : (
-        <ScrollView
-          style={contractStyles.scrollView}
-          showsVerticalScrollIndicator={false}>
-          {paginatedContracts.map(renderContract)}
-
-          {/* Pagination Controls */}
-          {totalItems > itemsPerPage && (
-            <View
-              style={{
-                backgroundColor: '#fff',
-                marginHorizontal: 16,
-                marginTop: 16,
-                borderRadius: 16,
-                padding: 20,
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 3},
-                shadowOpacity: 0.08,
-                shadowRadius: 12,
-                elevation: 4,
-              }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
-                <TouchableOpacity
-                  onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    backgroundColor: currentPage === 1 ? '#f8f9fa' : '#2529a1',
-                    opacity: currentPage === 1 ? 0.5 : 1,
-                  }}>
-                  <Icon
-                    name="chevron-left"
-                    size={20}
-                    color={currentPage === 1 ? '#6c757d' : '#fff'}
-                  />
-                  <Text
-                    style={{
-                      color: currentPage === 1 ? '#6c757d' : '#fff',
-                      marginLeft: 4,
-                      fontWeight: '600',
-                    }}>
-                    Anterior
-                  </Text>
-                </TouchableOpacity>
-
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <Text style={{color: '#6c757d', fontSize: 14}}>
-                    Página {currentPage} de{' '}
-                    {Math.ceil(totalItems / itemsPerPage)}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  onPress={() =>
-                    setCurrentPage(prev =>
-                      Math.min(Math.ceil(totalItems / itemsPerPage), prev + 1),
-                    )
-                  }
-                  disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    backgroundColor:
-                      currentPage >= Math.ceil(totalItems / itemsPerPage)
-                        ? '#f8f9fa'
-                        : '#2529a1',
-                    opacity:
-                      currentPage >= Math.ceil(totalItems / itemsPerPage)
-                        ? 0.5
-                        : 1,
-                  }}>
-                  <Text
-                    style={{
-                      color:
-                        currentPage >= Math.ceil(totalItems / itemsPerPage)
-                          ? '#6c757d'
-                          : '#fff',
-                      marginRight: 4,
-                      fontWeight: '600',
-                    }}>
-                    Próxima
-                  </Text>
-                  <Icon
-                    name="chevron-right"
-                    size={20}
-                    color={
-                      currentPage >= Math.ceil(totalItems / itemsPerPage)
-                        ? '#6c757d'
-                        : '#fff'
-                    }
-                  />
-                </TouchableOpacity>
+      <FlatList
+        data={safeContracts}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={({ item }) => renderContract(item)}
+        contentContainerStyle={contractStyles.scrollContent}
+        ListEmptyComponent={() => {
+          if (isLoading && safeContracts.length === 0) {
+            return (
+              <View style={{ paddingTop: 8 }}>
+                {[1, 2, 3, 4].map((k) => (
+                  <View key={k} style={contractStyles.skeletonCard}>
+                    <View style={[contractStyles.skeletonLine, { width: '50%', height: 16, marginBottom: 12 }]} />
+                    <View style={[contractStyles.skeletonLine, { width: '80%', height: 12 }]} />
+                  </View>
+                ))}
               </View>
+            );
+          }
+          if (error) {
+            return (
+              <View style={contractStyles.emptyContainer}>
+                <Icon name="exclamation-triangle" size={48} color="#e74c3c" style={{ marginBottom: 14 }} />
+                <Text style={contractStyles.emptyTitle}>Erro ao carregar contratos</Text>
+                <Text style={contractStyles.emptySubtitle}>Tente novamente mais tarde</Text>
+              </View>
+            );
+          }
+          return (
+            <View style={contractStyles.emptyContainer}>
+              <Icon name="file-text-o" size={64} color="#bdc3c7" style={{ marginBottom: 14 }} />
+              <Text style={contractStyles.emptyTitle}>Nenhum contrato encontrado</Text>
+              <Text style={contractStyles.emptySubtitle}>
+                {searchQuery ? 'Tente outros termos de busca' : 'Os contratos aparecerão aqui quando disponíveis'}
+              </Text>
             </View>
-          )}
-
-          <View style={contractStyles.bottomPadding} />
-        </ScrollView>
-      )}
+          );
+        }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        onEndReached={() => {
+          if (!isLoading && safeContracts.length < totalItems) {
+            setCurrentPage((p) => p + 1);
+          }
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={() =>
+          isLoading && safeContracts.length > 0 ? (
+            <View style={{ paddingVertical: 20 }}>
+              <ActivityIndicator size="small" color={colors.primary} />
+            </View>
+          ) : null
+        }
+      />
 
       <CreateContractModal
         visible={createModalVisible}
         onClose={() => setCreateModalVisible(false)}
         onSuccess={handleCreateSuccess}
       />
-
-      {/* Dropdown Overlay */}
-      {showItemsPerPageDropdown && (
-        <TouchableWithoutFeedback
-          onPress={() => setShowItemsPerPageDropdown(false)}>
-          <View
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 998,
-            }}>
-            <View
-              style={{
-                position: 'absolute',
-                top: 140,
-                right: 20,
-                backgroundColor: '#fff',
-                borderWidth: 1,
-                borderColor: '#e9ecef',
-                borderRadius: 6,
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 999,
-                zIndex: 999,
-              }}>
-              {[5, 10, 20, 50].map(size => (
-                <TouchableOpacity
-                  key={size}
-                  onPress={() => {
-                    setItemsPerPage(size);
-                    setCurrentPage(1);
-                    setShowItemsPerPageDropdown(false);
-                  }}
-                  style={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    backgroundColor:
-                      itemsPerPage === size ? '#f8f9fa' : 'transparent',
-                    borderBottomWidth: size !== 50 ? 1 : 0,
-                    borderBottomColor: '#f1f3f4',
-                  }}>
-                  <Text
-                    style={{
-                      color: itemsPerPage === size ? '#2529a1' : '#495057',
-                      fontSize: 14,
-                      fontWeight: itemsPerPage === size ? '600' : '400',
-                    }}>
-                    {size}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      )}
-    </SafeAreaView>
+    </View>
   );
 };
 
 const contractStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background,
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+  subHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 9,
+    paddingBottom: 9,
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: colors.border,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    height: 40,
+  },
+  searchInput: {
+    flex: 1,
+    height: '100%',
+    paddingHorizontal: 8,
+    color: colors.text,
+    fontSize: 14,
+  },
+  clearSearchButton: { padding: 4 },
+  addButton: {
+    backgroundColor: colors.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 80,
+  },
+  skeletonCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  skeletonLine: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: 6,
   },
   headerTitle: {
     fontSize: 24,
@@ -528,15 +351,15 @@ const contractStyles = StyleSheet.create({
     paddingTop: 16,
   },
   contractCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
+    backgroundColor: '#fff',
     marginBottom: 12,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 12,
+    elevation: 4,
   },
   contractHeader: {
     padding: 16,
@@ -661,11 +484,11 @@ const contractStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2529a1',
+    backgroundColor: colors.primary,
     margin: 16,
     marginTop: 0,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   viewButtonText: {
     color: '#FFFFFF',
@@ -673,45 +496,17 @@ const contractStyles = StyleSheet.create({
     fontWeight: '600',
     marginRight: 8,
   },
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#6C757D',
-    marginTop: 12,
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#212529',
-    marginTop: 16,
-    textAlign: 'center',
-  },
-  errorDetail: {
-    fontSize: 14,
-    color: '#6C757D',
-    marginTop: 8,
-    textAlign: 'center',
-  },
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#212529',
-    marginTop: 16,
+    color: '#0F172A',
+    marginBottom: 6,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#6C757D',
-    marginTop: 8,
+    color: '#94A3B8',
     textAlign: 'center',
-  },
-  bottomPadding: {
-    height: 20,
   },
 });
 

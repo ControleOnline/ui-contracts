@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Text,
   View,
@@ -9,19 +9,22 @@ import {
   Modal,
   StyleSheet,
 } from 'react-native';
-import {useStores} from '@store';
+import { useStores } from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {Picker} from '@react-native-picker/picker';
+import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
+import { Picker } from '@react-native-picker/picker';
+import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
 
-const CreateContractModal = ({visible, onClose, onSuccess}) => {
+const CreateContractModal = ({ visible, onClose, onSuccess }) => {
+  const {showError} = useMessage();
   const contractStore = useStores(state => state.contract);
-  const contractActions = contractStore.actions;
+  const contractActions = contractStore?.actions || {};
   const peopleStore = useStores(state => state.people);
-  const peopleGetters = peopleStore.getters;
-  const modelsStore = useStores(state => state.models);
-  const modelsActions = modelsStore.actions;
+  const peopleGetters = peopleStore?.getters || {};
+  const modelsStore = useStores(state => state.model);
+  const modelsActions = modelsStore?.actions || {};
 
-  const {currentCompany} = peopleGetters;
+  const { currentCompany } = peopleGetters;
 
   const [isLoading, setIsLoading] = useState(false);
   const [contractModels, setContractModels] = useState([]);
@@ -53,7 +56,7 @@ const CreateContractModal = ({visible, onClose, onSuccess}) => {
   const loadContractModels = async () => {
     setLoadingModels(true);
     try {
-      const response = await modelsActions.getItems({context: 'contract'});
+      const response = await modelsActions.getItems({ context: 'contract' });
 
       setContractModels(response);
     } catch (error) {
@@ -75,7 +78,7 @@ const CreateContractModal = ({visible, onClose, onSuccess}) => {
 
   const handleSubmit = async () => {
     if (!selectedModel) {
-      alert('Por favor, preencha todos os campos obrigatórios.');
+      showError('Por favor, selecione um modelo de contrato.');
       return;
     }
 
@@ -90,10 +93,10 @@ const CreateContractModal = ({visible, onClose, onSuccess}) => {
       await contractActions.save(contractData);
 
       onSuccess && onSuccess();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Erro ao criar contrato:', error);
-      alert('Erro ao criar contrato. Tente novamente.');
+      showError('Erro ao criar contrato. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -117,10 +120,10 @@ const CreateContractModal = ({visible, onClose, onSuccess}) => {
       transparent={true}
       visible={modelPickerVisible}
       onRequestClose={() => setModelPickerVisible(false)}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.selectModalContent}>
-          <View style={styles.selectModalHeader}>
-            <Text style={styles.selectModalTitle}>Selecionar Modelo</Text>
+      <View style={styles.pickerModalOverlay}>
+        <View style={styles.pickerModalContent}>
+          <View style={styles.pickerModalHeader}>
+            <Text style={styles.pickerModalTitle}>Selecionar Modelo</Text>
             <TouchableOpacity
               onPress={() => setModelPickerVisible(false)}
               style={styles.closeButton}>
@@ -128,7 +131,7 @@ const CreateContractModal = ({visible, onClose, onSuccess}) => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.selectModalBody}>
+          <ScrollView style={styles.pickerModalBody}>
             {loadingModels ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="small" color="#2529a1" />
@@ -154,7 +157,7 @@ const CreateContractModal = ({visible, onClose, onSuccess}) => {
                       style={[
                         styles.modelName,
                         selectedModel === model['@id'] &&
-                          styles.selectOptionTextActive,
+                        styles.selectOptionTextActive,
                       ]}>
                       {model.model}
                     </Text>
@@ -177,202 +180,186 @@ const CreateContractModal = ({visible, onClose, onSuccess}) => {
   );
 
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
+    <AnimatedModal
       visible={visible}
-      onRequestClose={handleClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Criar Novo Contrato</Text>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Icon name="close" size={24} color="#666666" />
+      onRequestClose={handleClose}
+      style={{ justifyContent: 'flex-end' }}>
+      <View style={styles.modalContainer}>
+        {/* Header */}
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Criar Novo Contrato</Text>
+          <TouchableOpacity onPress={handleClose} style={styles.headerCloseButton}>
+            <Icon name="close" size={20} color="#64748B" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+          {/* Modelo do Contrato */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>
+              Modelo do Contrato <Text style={styles.required}>*</Text>
+            </Text>
+            <TouchableOpacity
+              style={styles.selectInput}
+              onPress={() => setModelPickerVisible(true)}>
+              <View style={styles.selectInputContent}>
+                <Icon
+                  name="description"
+                  size={20}
+                  color="#2529a1"
+                  style={{ marginRight: 8 }}
+                />
+                <Text
+                  style={[
+                    styles.selectInputText,
+                    { color: selectedModel ? '#1A1A1A' : '#999999' },
+                  ]}>
+                  {selectedModel
+                    ? contractModels.find(m => m['@id'] === selectedModel)?.model
+                    : 'Selecionar modelo'}
+                </Text>
+              </View>
+              <Icon name="keyboard-arrow-down" size={24} color="#666666" />
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            style={styles.modalBody}
-            showsVerticalScrollIndicator={false}>
-            {/* Modelo do Contrato */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>
-                Modelo do Contrato <Text style={styles.required}>*</Text>
-              </Text>
-              <TouchableOpacity
-                style={styles.selectInput}
-                onPress={() => setModelPickerVisible(true)}>
-                <View style={styles.selectInputContent}>
-                  <Icon
-                    name="description"
-                    size={20}
-                    color="#2529a1"
-                    style={{marginRight: 8}}
-                  />
-                  <Text
-                    style={[
-                      styles.selectInputText,
-                      {color: selectedModel ? '#1A1A1A' : '#999999'},
-                    ]}>
-                    {selectedModel
-                      ? contractModels.find(m => m['@id'] === selectedModel)
-                          ?.model
-                      : 'Selecionar modelo'}
-                  </Text>
-                </View>
-                <Icon name="expand-more" size={24} color="#666666" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Beneficiário */}
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Data de Início</Text>
-              <View style={styles.dateContainer}>
-                {/* Dia */}
-                <View style={styles.datePickerContainer}>
-                  <Text style={styles.dateLabel}>Dia</Text>
-                  <View style={styles.pickerContainer}>
-                    <Picker
-                      selectedValue={startDay}
-                      style={styles.picker}
-                      onValueChange={itemValue => setStartDay(itemValue)}>
-                      <Picker.Item label="Dia" value="" />
-                      {Array.from({length: 31}, (_, i) => i + 1).map(day => (
-                        <Picker.Item
-                          key={day}
-                          label={day.toString()}
-                          value={day.toString()}
-                        />
-                      ))}
-                    </Picker>
-                  </View>
-                </View>
-
-                {/* Mês */}
-                <View style={styles.datePickerContainer}>
-                  <Text style={styles.dateLabel}>Mês</Text>
-                  <View style={styles.pickerContainer}>
-                    <Picker
-                      selectedValue={startMonth}
-                      style={styles.picker}
-                      onValueChange={itemValue => setStartMonth(itemValue)}>
-                      <Picker.Item label="Mês" value="" />
-                      <Picker.Item label="Janeiro" value="1" />
-                      <Picker.Item label="Fevereiro" value="2" />
-                      <Picker.Item label="Março" value="3" />
-                      <Picker.Item label="Abril" value="4" />
-                      <Picker.Item label="Maio" value="5" />
-                      <Picker.Item label="Junho" value="6" />
-                      <Picker.Item label="Julho" value="7" />
-                      <Picker.Item label="Agosto" value="8" />
-                      <Picker.Item label="Setembro" value="9" />
-                      <Picker.Item label="Outubro" value="10" />
-                      <Picker.Item label="Novembro" value="11" />
-                      <Picker.Item label="Dezembro" value="12" />
-                    </Picker>
-                  </View>
-                </View>
-
-                {/* Ano */}
-                <View style={styles.dateInputContainer}>
-                  <Text style={styles.dateLabel}>Ano</Text>
-                  <TextInput
-                    style={styles.yearInput}
-                    value={startYear}
-                    onChangeText={setStartYear}
-                    placeholder="2024"
-                    placeholderTextColor="#999999"
-                    keyboardType="numeric"
-                    maxLength={4}
-                  />
+          {/* Data de Início */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Data de Início</Text>
+            <View style={styles.dateContainer}>
+              {/* Dia */}
+              <View style={styles.datePickerContainer}>
+                <Text style={styles.dateLabel}>Dia</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={startDay}
+                    style={styles.picker}
+                    onValueChange={itemValue => setStartDay(itemValue)}>
+                    <Picker.Item label="Dia" value="" />
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                      <Picker.Item
+                        key={day}
+                        label={day.toString()}
+                        value={day.toString()}
+                      />
+                    ))}
+                  </Picker>
                 </View>
               </View>
-            </View>
-          </ScrollView>
 
-          {/* Botões de ação */}
-          <View style={styles.modalFooter}>
-            <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.createButton,
-                !selectedModel && styles.createButtonDisabled,
-              ]}
-              onPress={handleSubmit}
-              disabled={isLoading || !selectedModel}>
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Icon
-                    name="add"
-                    size={20}
-                    color="#FFFFFF"
-                    style={{marginRight: 8}}
-                  />
-                  <Text style={styles.createButtonText}>Criar Contrato</Text>
-                </>
-              )}
-            </TouchableOpacity>
+              {/* Mês */}
+              <View style={styles.datePickerContainer}>
+                <Text style={styles.dateLabel}>Mês</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={startMonth}
+                    style={styles.picker}
+                    onValueChange={itemValue => setStartMonth(itemValue)}>
+                    <Picker.Item label="Mês" value="" />
+                    <Picker.Item label="Jan" value="1" />
+                    <Picker.Item label="Fev" value="2" />
+                    <Picker.Item label="Mar" value="3" />
+                    <Picker.Item label="Abr" value="4" />
+                    <Picker.Item label="Mai" value="5" />
+                    <Picker.Item label="Jun" value="6" />
+                    <Picker.Item label="Jul" value="7" />
+                    <Picker.Item label="Ago" value="8" />
+                    <Picker.Item label="Set" value="9" />
+                    <Picker.Item label="Out" value="10" />
+                    <Picker.Item label="Nov" value="11" />
+                    <Picker.Item label="Dez" value="12" />
+                  </Picker>
+                </View>
+              </View>
+
+              {/* Ano */}
+              <View style={styles.dateInputContainer}>
+                <Text style={styles.dateLabel}>Ano</Text>
+                <TextInput
+                  style={styles.yearInput}
+                  value={startYear}
+                  onChangeText={setStartYear}
+                  placeholder="2024"
+                  placeholderTextColor="#999999"
+                  keyboardType="numeric"
+                  maxLength={4}
+                />
+              </View>
+            </View>
           </View>
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={styles.modalFooter}>
+          <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
+            <Text style={styles.cancelButtonText}>Cancelar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.createButton,
+              (!selectedModel || isLoading) && styles.createButtonDisabled,
+            ]}
+            onPress={handleSubmit}
+            disabled={isLoading || !selectedModel}>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.createButtonText}>Salvar</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
       {renderModelSelectModal()}
-    </Modal>
+    </AnimatedModal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    width: '90%',
-    maxHeight: '80%',
-    elevation: 10,
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
+    width: '100%',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 10,
   },
   modalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: '#F1F5F9',
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#1A1A1A',
+    fontWeight: '700',
+    color: '#0F172A',
   },
-  closeButton: {
-    padding: 4,
+  headerCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalBody: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    maxHeight: 400,
+    padding: 24,
   },
   inputGroup: {
     marginBottom: 20,
   },
   inputLabel: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#1A1A1A',
+    fontWeight: '600',
+    color: '#212529',
     marginBottom: 8,
   },
   required: {
@@ -383,11 +370,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderColor: '#e9ecef',
+    borderRadius: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#f8f9fa',
   },
   selectInputContent: {
     flexDirection: 'row',
@@ -398,78 +385,102 @@ const styles = StyleSheet.create({
     fontSize: 16,
     flex: 1,
   },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#1A1A1A',
-    backgroundColor: '#FFFFFF',
+  dateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  datePickerContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
+  dateInputContainer: {
+    flex: 1,
+  },
+  dateLabel: {
+    fontSize: 14,
+    color: '#6c757d',
+    marginBottom: 4,
+    fontWeight: '500',
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    borderColor: '#e9ecef',
+    borderRadius: 12,
+    backgroundColor: '#f8f9fa',
+    height: 50,
+    justifyContent: 'center',
   },
   picker: {
     color: '#1A1A1A',
   },
+  yearInput: {
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12, // Adjusted for cleaner look
+    height: 50,
+    fontSize: 16,
+    color: '#1A1A1A',
+    backgroundColor: '#f8f9fa',
+    textAlign: 'center',
+  },
   modalFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    padding: 20,
+    gap: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
+    borderTopColor: '#e9ecef',
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 12,
-    marginRight: 8,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#6c757d',
     alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666666',
+    color: '#6c757d',
   },
   createButton: {
     flex: 1,
-    flexDirection: 'row',
-    paddingVertical: 12,
-    marginLeft: 8,
-    borderRadius: 8,
-    backgroundColor: '#2529a1',
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#007bff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   createButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: '#6c757d',
   },
   createButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#fff',
   },
-  // Select Modal Styles
-  selectModalContent: {
+  // Picker Modal Styles (Separate for Model Selection)
+  pickerModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pickerModalContent: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     width: '90%',
     maxHeight: '70%',
     elevation: 10,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
   },
-  selectModalHeader: {
+  pickerModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -478,12 +489,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
   },
-  selectModalTitle: {
+  pickerModalTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1A1A1A',
   },
-  selectModalBody: {
+  closeButton: {
+    padding: 4,
+  },
+  pickerModalBody: {
     maxHeight: 300,
   },
   selectOption: {
@@ -501,16 +515,6 @@ const styles = StyleSheet.create({
     color: '#2529a1',
     fontWeight: '600',
   },
-  modelInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  personInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
   iconContainer: {
     width: 40,
     height: 40,
@@ -520,11 +524,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  modelName: {
-    fontSize: 16,
-    color: '#1A1A1A',
+  modelInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
-  personName: {
+  modelName: {
     fontSize: 16,
     color: '#1A1A1A',
   },
@@ -545,36 +550,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666666',
     marginTop: 12,
-  },
-  // Date Styles
-  dateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  datePickerContainer: {
-    flex: 1,
-    marginRight: 8,
-  },
-  dateInputContainer: {
-    flex: 1,
-  },
-  dateLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666666',
-    marginBottom: 4,
-  },
-  yearInput: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#1A1A1A',
-    backgroundColor: '#FFFFFF',
-    textAlign: 'center',
   },
 });
 
