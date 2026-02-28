@@ -5,9 +5,9 @@ const contractRoutes = [
     name: 'ContractDetails',
     component: Contract,
     options: {
-      headerShown: false,
-      headerBackVisible: false,
-      title: 'Contrato',
+      headerShown: true,
+      headerBackVisible: true,
+      title: global.t?.t("ui-contracts", "title", "contract"),
     },
   },
   
