@@ -177,7 +177,7 @@ const GeneralTab = ({
                 <Icon name="person" size={20} color={colors.white} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.subscriberName}>
+                <Text style={styles.subscriberName} numberOfLines={1} ellipsizeMode="tail">
                   {subscriber.people?.name || 'Nome não disponível'}
                 </Text>
                 <Text style={styles.subscriberRole}>{subscriber.peopleType}</Text>
@@ -507,12 +507,39 @@ const ContractDetails = () => {
     { key: 1, label: 'Minuta' },
   ];
 
-  if (isLoading || !contract) {
-    return (
-      <View style={[styles.loadingContainer, { flex: 1, justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+  const renderSkeletonScreen = () => (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.headerProfile}>
+        <View style={[styles.skeletonCircle, { width: 64, height: 64, borderRadius: 32 }]} />
+        <View style={[styles.skeletonLine, { width: 220, height: 22, marginTop: 14 }]} />
+        <View style={[styles.skeletonLine, { width: 90, height: 12, marginTop: 8 }]} />
       </View>
-    );
+
+      <View style={styles.tabsHeader}>
+        <View style={styles.skeletonTab} />
+        <View style={styles.skeletonTab} />
+      </View>
+
+      <ScrollView style={styles.contentContainer} contentContainerStyle={{ paddingBottom: 24 }}>
+        <View style={styles.section}>
+          <View style={[styles.skeletonLine, { width: '55%', height: 18, marginBottom: 16 }]} />
+          <View style={[styles.skeletonLine, { width: '100%', height: 14, marginBottom: 10 }]} />
+          <View style={[styles.skeletonLine, { width: '92%', height: 14, marginBottom: 10 }]} />
+          <View style={[styles.skeletonLine, { width: '84%', height: 14 }]} />
+        </View>
+
+        <View style={styles.section}>
+          <View style={[styles.skeletonLine, { width: '42%', height: 18, marginBottom: 16 }]} />
+          <View style={[styles.skeletonLine, { width: '100%', height: 54, borderRadius: 10, marginBottom: 10 }]} />
+          <View style={[styles.skeletonLine, { width: '100%', height: 54, borderRadius: 10, marginBottom: 10 }]} />
+          <View style={[styles.skeletonLine, { width: '100%', height: 54, borderRadius: 10 }]} />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+
+  if (isLoading || !contract) {
+    return renderSkeletonScreen();
   }
 
   return (
@@ -522,7 +549,7 @@ const ContractDetails = () => {
         <View style={styles.avatarContainer}>
           <Icon name="description" size={32} color={colors.white} />
         </View>
-        <Text style={styles.profileName}>{contract.contractModel?.model}</Text>
+        <Text style={styles.profileName} numberOfLines={1} ellipsizeMode="tail">{contract.contractModel?.model}</Text>
         <Text style={styles.profileId}>ID: {contract.id}</Text>
       </View>
 
@@ -647,7 +674,7 @@ const ContractDetails = () => {
                 style={[styles.personItem, selectedPerson === person['@id'] && styles.personItemActive]}
                 onPress={() => { setSelectedPerson(person['@id']); setPeoplePickerVisible(false); }}
               >
-                <Text style={styles.personNameList}>{person.name}</Text>
+                <Text style={styles.personNameList} numberOfLines={1} ellipsizeMode="tail">{person.name}</Text>
                 {selectedPerson === person['@id'] && <Icon name="check" size={20} color={colors.primary} />}
               </TouchableOpacity>
             ))}
@@ -685,6 +712,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textAlign: 'center',
     paddingHorizontal: 20,
+    maxWidth: '86%',
   },
   profileId: {
     fontSize: 14,
@@ -876,6 +904,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#0F172A',
+    maxWidth: '92%',
   },
   subscriberRole: {
     fontSize: 13,
@@ -935,6 +964,21 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#64748B',
     marginTop: 12,
+  },
+  skeletonCircle: {
+    backgroundColor: '#E2E8F0',
+  },
+  skeletonLine: {
+    backgroundColor: '#E2E8F0',
+    borderRadius: 8,
+  },
+  skeletonTab: {
+    flex: 1,
+    height: 44,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
   },
   bottomSheetContent: {
     width: '100%',
@@ -1022,6 +1066,8 @@ const styles = StyleSheet.create({
   personNameList: {
     fontSize: 16,
     color: '#334155',
+    flex: 1,
+    paddingRight: 8,
   },
   infoBox: {
     backgroundColor: '#FFFBEB',

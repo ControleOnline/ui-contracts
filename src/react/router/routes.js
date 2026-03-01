@@ -1,4 +1,5 @@
 import Contract from '@controleonline/ui-contracts/src/react/pages/ContractDetails';
+import { env } from '@env';
 
 const contractRoutes = [
   {
@@ -8,6 +9,7 @@ const contractRoutes = [
       headerShown: true,
       headerBackVisible: true,
       title: global.t?.t("ui-contracts", "title", "contract"),
+      showBottomToolBar: env.APP_TYPE === 'CRM',
     },
   },
   
