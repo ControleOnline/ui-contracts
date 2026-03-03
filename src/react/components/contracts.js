@@ -175,9 +175,9 @@ const Contracts = ({client}) => {
   return (
     <SafeAreaView style={contractStyles.container}>
       <View style={contractStyles.header}>
-        <Text style={contractStyles.headerTitle}>Contratos</Text>
+        <Text style={contractStyles.headerTitle}>{global.t?.t('contracts', 'label', 'contracts')}</Text>
         <Text style={contractStyles.headerSubtitle}>
-          {contractsByClient.length} contrato{contractsByClient.length !== 1 ? 's' : ''}
+          {contractsByClient.length} {global.t?.t('contracts', 'label', 'contract')}{contractsByClient.length !== 1 ? 's' : ''}
         </Text>
       </View>
 
@@ -185,14 +185,14 @@ const Contracts = ({client}) => {
         <View style={contractStyles.centerContent}>
           <ActivityIndicator size="large" color="#2529a1" />
           <Text style={contractStyles.loadingText}>
-            Carregando contratos...
+            {global.t?.t('contracts', 'label', 'loadingContracts')}
           </Text>
         </View>
       ) : error ? (
         <View style={contractStyles.centerContent}>
           <Icon name="error-outline" size={48} color="#F44336" />
           <Text style={contractStyles.errorText}>
-            Erro ao carregar contratos
+            {global.t?.t('contracts', 'label', 'errorLoadingContracts')}
           </Text>
           <Text style={contractStyles.errorDetail}>{error}</Text>
         </View>
@@ -200,10 +200,10 @@ const Contracts = ({client}) => {
         <View style={contractStyles.centerContent}>
           <Icon name="description" size={48} color="#CCCCCC" />
           <Text style={contractStyles.emptyTitle}>
-            Nenhum contrato encontrado
+            {global.t?.t('contracts', 'label', 'noContractsFound')}
           </Text>
           <Text style={contractStyles.emptySubtitle}>
-            Os contratos aparecerão aqui quando disponíveis
+            {global.t?.t('contracts', 'label', 'contractsWillAppearHere')}
           </Text>
         </View>
       ) : (
