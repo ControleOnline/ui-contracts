@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useState, useLayoutEffect, useRef } from 'react';
 import {
   Text,
   View,
@@ -18,7 +18,7 @@ import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedM
 import { colors } from '@controleonline/../../src/styles/colors';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, handleSignContract }) => {
   return (
@@ -27,7 +27,7 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
         style={styles.tabScroll}
         contentContainerStyle={{
           padding: 16,
-          paddingBottom: canEdit ? 100 : 40, // espaço extra quando botão fixo aparece
+          paddingBottom: canEdit ? 120 : 40, // espaço para botão fixo
         }}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Minuta do Contrato</Text>
@@ -57,7 +57,6 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
         </View>
       </ScrollView>
 
-      {/* Botão fixo na parte inferior */}
       {canEdit && (
         <View style={styles.fixedSignButtonContainer}>
           <TouchableOpacity style={styles.signButton} onPress={handleSignContract}>
@@ -83,7 +82,6 @@ const AssinantesTab = ({
 }) => {
   return (
     <ScrollView style={styles.tabScroll} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
-      {/* conteúdo da aba Assinantes igual ao anterior */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Assinantes</Text>
 
@@ -286,7 +284,7 @@ const ContractDetails = () => {
   if (isLoading || !contract) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.headerSkeleton} />
+        <View style={styles.topSkeleton} />
         <View style={styles.infoSkeleton} />
         <View style={styles.tabsSkeleton} />
       </SafeAreaView>
@@ -295,20 +293,20 @@ const ContractDetails = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Cabeçalho */}
-      <View style={styles.pageHeader}>
-        <View style={styles.avatar}>
-          <Icon name="description" size={28} color="#fff" />
+      {/* TOPO FIXO - Título do contrato restaurado */}
+      <View style={styles.topHeader}>
+        <View style={styles.topAvatar}>
+          <Icon name="description" size={32} color="#fff" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.contractTitle} numberOfLines={1}>
+          <Text style={styles.topTitle} numberOfLines={1}>
             {contract.contractModel?.model || 'Contrato sem modelo'}
           </Text>
-          <Text style={styles.contractId}>ID: {contract.id}</Text>
+          <Text style={styles.topSubtitle}>ID: {contract.id}</Text>
         </View>
       </View>
 
-      {/* Informações fixas */}
+      {/* Informações gerais fixas */}
       <View style={styles.fixedInfo}>
         <View
           style={[
@@ -339,7 +337,7 @@ const ContractDetails = () => {
         </View>
       </View>
 
-      {/* Tabs */}
+      {/* Abas */}
       <View style={styles.tabs}>
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 0 && styles.tabActive]}
@@ -353,13 +351,12 @@ const ContractDetails = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Conteúdo rolável */}
+      {/* Conteúdo das abas */}
       <ScrollView
         ref={scrollRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        scrollEventThrottle={16}
         onScroll={(e) => {
           const idx = Math.round(e.nativeEvent.contentOffset.x / width);
           if (idx !== activeTab) setActiveTab(idx);
@@ -390,7 +387,7 @@ const ContractDetails = () => {
         </View>
       </ScrollView>
 
-      {/* Modal */}
+      {/* Modal de seleção de pessoa */}
       <AnimatedModal visible={peoplePickerVisible} onRequestClose={() => setPeoplePickerVisible(false)}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
@@ -422,37 +419,35 @@ const ContractDetails = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
+  container: { flex: 1, backgroundColor: '#f8fafc' },
 
-  pageHeader: {
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
+    paddingTop: Platform.OS === 'ios' ? 50 : 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  topAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
   },
-  contractTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+  topTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
     color: '#0f172a',
   },
-  contractId: {
-    fontSize: 13,
+  topSubtitle: {
+    fontSize: 14,
     color: '#64748b',
-    marginTop: 2,
+    marginTop: 4,
   },
 
   fixedInfo: {
@@ -502,23 +497,13 @@ const styles = StyleSheet.create({
   tabLabelActive: { color: colors.primary, fontWeight: '700' },
 
   tabScroll: { flex: 1 },
-
   section: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 16,
-  },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#0f172a', marginBottom: 16 },
 
   centerContainer: { alignItems: 'center', paddingVertical: 60 },
   loadingText: { marginTop: 16, color: '#64748b', fontSize: 15 },
@@ -527,7 +512,6 @@ const styles = StyleSheet.create({
 
   htmlWrapper: { backgroundColor: '#fff' },
 
-  // Botão fixo na parte inferior
   fixedSignButtonContainer: {
     position: 'absolute',
     bottom: 0,
@@ -535,14 +519,14 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: '#fff',
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16, // safe area no iOS
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    elevation: 8,
+    elevation: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   signButton: {
     flexDirection: 'row',
@@ -552,14 +536,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
   },
-  signButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    marginLeft: 12,
-  },
+  signButtonText: { color: '#fff', fontSize: 16, fontWeight: '700', marginLeft: 12 },
 
-  // estilos da aba Assinantes (mantidos resumidos)
+  // Estilos da aba Assinantes (resumidos)
   subscriberCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -637,7 +616,7 @@ const styles = StyleSheet.create({
   personRowSelected: { backgroundColor: '#f0f9ff' },
   personName: { fontSize: 16, color: '#0f172a', flex: 1 },
 
-  headerSkeleton: { height: 100, backgroundColor: '#e2e8f0', margin: 16, borderRadius: 12 },
+  topSkeleton: { height: 100, backgroundColor: '#e2e8f0', margin: 16, borderRadius: 12 },
   infoSkeleton: { height: 140, backgroundColor: '#e2e8f0', marginHorizontal: 16, marginBottom: 8, borderRadius: 12 },
   tabsSkeleton: { height: 56, backgroundColor: '#e2e8f0', marginHorizontal: 16, borderRadius: 12 },
 });

@@ -9,10 +9,10 @@ const contractRoutes = [
       headerShown: true,
       headerBackVisible: true,
       title: global.t?.t("ui-contracts", "title", "contract"),
-      showBottomToolBar: env.APP_TYPE === 'CRM',
+      showBottomToolBar: true,
     },
   },
-  
+
 ];
 
 export default contractRoutes;
