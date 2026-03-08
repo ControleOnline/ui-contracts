@@ -7,146 +7,138 @@ import {
   StyleSheet,
   Dimensions,
   ActivityIndicator,
-  TextInput,
-  Modal,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStores } from '@store';
-import css from '@controleonline/ui-orders/src/react/css/orders';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Picker } from '@react-native-picker/picker';
 import RenderHTML from 'react-native-render-html';
-import CompanySelector from '@controleonline/ui-crm/src/react/components/CompanySelector';
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import { colors } from '@controleonline/../../src/styles/colors';
-import {useMessage} from '@controleonline/ui-common/src/react/components/MessageService';
+import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-const GeneralTab = ({
-  contract,
+const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, handleSignContract }) => {
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={styles.tabScroll}
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: canEdit ? 100 : 40, // espaço extra quando botão fixo aparece
+        }}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Minuta do Contrato</Text>
+
+          {fileLoading ? (
+            <View style={styles.centerContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.loadingText}>Carregando minuta...</Text>
+            </View>
+          ) : fileError ? (
+            <Text style={styles.errorText}>{fileError}</Text>
+          ) : contract.contractFile ? (
+            <View style={styles.htmlWrapper}>
+              <RenderHTML
+                contentWidth={width - 32}
+                source={{ html: fileContent }}
+                ignoredDomTags={['meta', 'title']}
+                baseStyle={{ color: '#334155', lineHeight: 24 }}
+              />
+            </View>
+          ) : (
+            <View style={styles.centerContainer}>
+              <Icon name="description" size={64} color={colors.textSecondary} />
+              <Text style={styles.emptyText}>Nenhuma minuta anexada</Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Botão fixo na parte inferior */}
+      {canEdit && (
+        <View style={styles.fixedSignButtonContainer}>
+          <TouchableOpacity style={styles.signButton} onPress={handleSignContract}>
+            <Icon name="edit" size={20} color="#fff" />
+            <Text style={styles.signButtonText}>Assinar Contrato</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+};
+
+const AssinantesTab = ({
   subscribers,
   canEdit,
-  setEditModalVisible,
-  setPeoplePickerVisible,
+  handleRemoveSubscriber,
+  handleAddSubscriber,
   selectedPerson,
   people,
-  handleAddSubscriber,
-  handleRemoveSubscriber,
+  setPeoplePickerVisible,
   newSubscriberRole,
   setNewSubscriberRole,
 }) => {
   return (
-    <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 80 }}>
-      {/* Contract Info Card */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Informações do Contrato</Text>
-          {canEdit && (
-            <TouchableOpacity onPress={() => setEditModalVisible(true)} style={styles.editButtonSmall}>
-              <Icon name="edit" size={16} color={colors.white} />
-              <Text style={styles.editButtonTextSmall}>Editar</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Status */}
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Status</Text>
-          <View
-            style={[
-              styles.statusBadge,
-              {
-                backgroundColor:
-                  contract.status?.status?.toLowerCase() === 'ativo'
-                    ? '#ECFDF5'
-                    : '#F8FAFC',
-              },
-            ]}>
-            <Text
-              style={[
-                styles.statusText,
-                {
-                  color:
-                    contract.status?.status?.toLowerCase() === 'ativo'
-                      ? colors.success
-                      : colors.textSecondary,
-                },
-              ]}>
-              {contract.status?.status}
-            </Text>
-          </View>
-        </View>
-
-        {/* Datas */}
-        <View style={styles.datesContainer}>
-          <View style={styles.dateItem}>
-            <Text style={styles.dateLabel}>Data de Início</Text>
-            <Text style={styles.dateValue}>
-              {new Date(contract?.startDate).toLocaleDateString('pt-BR')}
-            </Text>
-          </View>
-          <View style={styles.dateItem}>
-            <Text style={styles.dateLabel}>Data de Término</Text>
-            <Text style={styles.dateValue}>
-              {contract?.endDate
-                ? new Date(contract.endDate).toLocaleDateString('pt-BR')
-                : '-'}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Subscribers Section */}
+    <ScrollView style={styles.tabScroll} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+      {/* conteúdo da aba Assinantes igual ao anterior */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Assinantes</Text>
 
-        {/* Add Subscriber Form */}
-        {canEdit && (
-          <View style={styles.addSubscriberContainer}>
-            <Text style={styles.subSectionTitle}>Adicionar Novo Assinante</Text>
-
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => setPeoplePickerVisible(true)}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <Icon
-                  name="person"
-                  size={20}
-                  color={colors.primary}
-                  style={{ marginRight: 8 }}
-                />
-                <Text
-                  style={{
-                    color: selectedPerson ? colors.text : colors.textSecondary,
-                    fontSize: 16,
-                  }}>
-                  {selectedPerson
-                    ? people &&
-                    people.find(p => p['@id'] === selectedPerson)?.name
-                    : 'Selecionar pessoa'}
-                </Text>
+        {subscribers.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <Icon name="people" size={64} color={colors.textSecondary} />
+            <Text style={styles.emptyText}>Nenhum assinante cadastrado</Text>
+          </View>
+        ) : (
+          subscribers.map((sub) => (
+            <View key={sub.id} style={styles.subscriberCard}>
+              <View style={styles.subscriberAvatar}>
+                <Icon name="person" size={24} color="#fff" />
               </View>
-              <Icon name="keyboard-arrow-down" size={24} color={colors.textSecondary} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.subscriberName}>{sub.people?.name || 'Nome não disponível'}</Text>
+                <Text style={styles.subscriberRole}>{sub.peopleType}</Text>
+              </View>
+              {canEdit && (
+                <TouchableOpacity onPress={() => handleRemoveSubscriber(sub.id)}>
+                  <Icon name="delete" size={24} color={colors.error} />
+                </TouchableOpacity>
+              )}
+            </View>
+          ))
+        )}
+
+        {canEdit && (
+          <View style={styles.addForm}>
+            <Text style={styles.addTitle}>Adicionar assinante</Text>
+
+            <TouchableOpacity style={styles.selectField} onPress={() => setPeoplePickerVisible(true)}>
+              <Icon name="person-outline" size={20} color={colors.primary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, color: selectedPerson ? '#0f172a' : '#94a3b8' }}>
+                {selectedPerson
+                  ? people?.find((p) => p['@id'] === selectedPerson)?.name || 'Selecionado'
+                  : 'Selecionar pessoa'}
+              </Text>
+              <Icon name="arrow-drop-down" size={24} color="#64748b" />
             </TouchableOpacity>
 
-            {/* Role Selection */}
-            <View style={styles.roleSelectionContainer}>
-              <Text style={styles.inputLabel}>Função:</Text>
-              <View style={styles.roleButtonsRow}>
+            <View style={{ marginVertical: 12 }}>
+              <Text style={styles.label}>Função</Text>
+              <View style={styles.roleRow}>
                 <TouchableOpacity
-                  style={[styles.roleButton, newSubscriberRole === 'Contractor' && styles.roleButtonActive]}
+                  style={[styles.roleBtn, newSubscriberRole === 'Contractor' && styles.roleBtnActive]}
                   onPress={() => setNewSubscriberRole('Contractor')}>
-                  <Text style={[styles.roleButtonText, newSubscriberRole === 'Contractor' && styles.roleButtonTextActive]}>
+                  <Text style={[styles.roleText, newSubscriberRole === 'Contractor' && { color: colors.primary }]}>
                     Contratante
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.roleButton, newSubscriberRole === 'Witness' && styles.roleButtonActive]}
+                  style={[styles.roleBtn, newSubscriberRole === 'Witness' && styles.roleBtnActive]}
                   onPress={() => setNewSubscriberRole('Witness')}>
-                  <Text style={[styles.roleButtonText, newSubscriberRole === 'Witness' && styles.roleButtonTextActive]}>
+                  <Text style={[styles.roleText, newSubscriberRole === 'Witness' && { color: colors.primary }]}>
                     Testemunha
                   </Text>
                 </TouchableOpacity>
@@ -154,534 +146,277 @@ const GeneralTab = ({
             </View>
 
             <TouchableOpacity
-              style={[
-                styles.addSubscriberButton,
-                !selectedPerson && styles.disabledButton,
-              ]}
-              onPress={handleAddSubscriber}
-              disabled={!selectedPerson}>
-              <Text style={styles.addSubscriberButtonText}>Adicionar Assinante</Text>
+              style={[styles.addButton, !selectedPerson && styles.addButtonDisabled]}
+              disabled={!selectedPerson}
+              onPress={handleAddSubscriber}>
+              <Text style={styles.addButtonText}>Adicionar</Text>
             </TouchableOpacity>
           </View>
-        )}
-
-        {subscribers.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon name="person-outline" size={48} color={colors.textSecondary} />
-            <Text style={styles.emptyText}>Nenhum assinante adicionado</Text>
-          </View>
-        ) : (
-          subscribers.map(subscriber => (
-            <View key={subscriber.id} style={styles.subscriberItem}>
-              <View style={styles.subscriberAvatar}>
-                <Icon name="person" size={20} color={colors.white} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.subscriberName} numberOfLines={1} ellipsizeMode="tail">
-                  {subscriber.people?.name || 'Nome não disponível'}
-                </Text>
-                <Text style={styles.subscriberRole}>{subscriber.peopleType}</Text>
-              </View>
-              {canEdit && (
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => handleRemoveSubscriber(subscriber.id)}>
-                  <Icon name="delete" size={20} color={colors.error} />
-                </TouchableOpacity>
-              )}
-            </View>
-          ))
         )}
       </View>
     </ScrollView>
   );
 };
 
-const ContractFileTab = ({
-  contract,
-  fileContent,
-  fileLoading,
-  fileError,
-  canEdit,
-  handleSaveContent,
-  handleSignContract,
-  width,
-}) => {
-  return (
-    <View style={{ flex: 1 }}>
-      <ScrollView
-        style={styles.tabContent}
-        contentContainerStyle={{ paddingBottom: 100, flexGrow: 1 }}
-        showsVerticalScrollIndicator={true}
-      >
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Minuta do Contrato</Text>
-          </View>
-
-          {fileLoading && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={styles.loadingText}>Carregando minuta...</Text>
-            </View>
-          )}
-
-          {fileError && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{fileError}</Text>
-            </View>
-          )}
-
-          {!fileLoading && (
-            contract.contractFile ? (
-              <View style={styles.htmlContainer}>
-                <RenderHTML
-                  contentWidth={width - 64}
-                  source={{ html: fileContent }}
-                  ignoredDomTags={['meta', 'title']}
-                  baseStyle={{ color: '#334155' }}
-                />
-              </View>
-            ) : (
-              <View style={styles.emptyState}>
-                <Icon name="description" size={48} color={colors.textSecondary} />
-                <Text style={styles.emptyText}>Nenhuma minuta anexada.</Text>
-              </View>
-            )
-          )}
-
-          {/* Sign Contract Button - Moved inside the scroll view and ensured visibility */}
-          {canEdit && (
-            <View style={{ marginTop: 20, marginBottom: 20 }}>
-              <TouchableOpacity style={styles.signButton} onPress={handleSignContract}>
-                <Icon name="edit" size={20} color={colors.white} style={{ marginRight: 8 }} />
-                <Text style={styles.signButtonText}>Assinar Contrato</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {!canEdit && (
-            <View style={styles.infoBox}>
-              <Icon name="info" size={24} color={colors.warning} style={{ marginBottom: 8 }} />
-              <Text style={styles.infoBoxTitle}>Este contrato não pode ser editado</Text>
-              <Text style={styles.infoBoxText}>Status atual: {contract?.status?.status}</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-    </View>
-  );
-};
-
 const ContractDetails = () => {
-  const {showError, showSuccess, showWarning} = useMessage();
   const navigation = useNavigation();
   const route = useRoute();
   const { contractId } = route.params;
-  const { width } = Dimensions.get('window');
 
-  // Stores
-  const contractStore = useStores(state => state.contract) || {};
-  const contractGetters = contractStore.getters || {};
-  const contractActions = contractStore.actions || {};
-  const contract_peoplesStore = useStores(state => state.contract_peoples) || {};
-  const contractPeopleActions = contract_peoplesStore.actions || {};
-  const peopleStore = useStores(state => state.people);
+  const { showSuccess, showError, showWarning } = useMessage();
+
+  const contractStore = useStores((s) => s.contract);
+  const contractPeopleStore = useStores((s) => s.contract_peoples);
+  const peopleStore = useStores((s) => s.people);
+
+  const { item: contract, isLoading } = contractStore.getters;
+  const contractActions = contractStore.actions;
+  const contractPeopleActions = contractPeopleStore.actions;
   const peopleActions = peopleStore.actions;
-  const peopleGetters = peopleStore.getters;
-  const statusStore = useStores(state => state.status);
-  const statusActions = statusStore.actions;
+  const { items: people, currentCompany } = peopleStore.getters;
 
-  // State
-  const { item: contract, isLoading, error } = contractGetters;
-  const { items: people, currentCompany } = peopleGetters;
   const [fileContent, setFileContent] = useState('');
   const [fileLoading, setFileLoading] = useState(false);
   const [fileError, setFileError] = useState(null);
-  const [selectedPerson, setSelectedPerson] = useState('');
-  const [newSubscriberRole, setNewSubscriberRole] = useState('Contractor');
   const [subscribers, setSubscribers] = useState([]);
+  const [selectedPerson, setSelectedPerson] = useState(null);
+  const [newSubscriberRole, setNewSubscriberRole] = useState('Contractor');
   const [peoplePickerVisible, setPeoplePickerVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+
   const scrollRef = useRef(null);
 
-  // Edit State
-  const [startDay, setStartDay] = useState('');
-  const [startMonth, setStartMonth] = useState('');
-  const [startYear, setStartYear] = useState('');
-  const [endDay, setEndDay] = useState('');
-  const [endMonth, setEndMonth] = useState('');
-  const [endYear, setEndYear] = useState('');
-
-
-  const canEdit = contract?.status?.status?.toLowerCase() === 'open';
+  const canEdit = contract?.status?.realStatus === 'open';
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: '',
-      headerShadowVisible: false,
-      headerStyle: { backgroundColor: '#F8FAFC' },
-      headerRight: () => null,
-    });
+    navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  // Helper: resolve people IRIs to objects with names
-  const resolvePeopleNames = useCallback(async (subscribersList) => {
-    const resolved = await Promise.all(
-      subscribersList.map(async (sub) => {
-        // If people is already an object with name, return as-is
-        if (sub.people && typeof sub.people === 'object' && sub.people.name) {
-          return sub;
-        }
-        // If people is a string IRI (e.g. "/people/102814"), fetch the person
-        const peopleIri = typeof sub.people === 'string' ? sub.people : sub.people?.['@id'];
-        if (peopleIri) {
-          try {
-            const personId = peopleIri.replace(/\D/g, '');
-            const personData = await peopleActions.get(personId);
-            return { ...sub, people: personData };
-          } catch (e) {
-            return sub; // If fetch fails, keep as-is
-          }
-        }
-        return sub;
-      })
-    );
-    return resolved;
-  }, [peopleActions]);
-
   useEffect(() => {
-    contractActions.get(contractId).then(async (d) => {
-      if (d.contractFile) fetchContractFile(d.contractFile['@id']);
-      if (d.peoples && d.peoples.length > 0) {
-        const resolvedPeoples = await resolvePeopleNames(d.peoples);
-        setSubscribers(resolvedPeoples);
+    const loadData = async () => {
+      const data = await contractActions.get(contractId);
+      if (data?.contractFile) {
+        setFileLoading(true);
+        try {
+          const res = await contractActions.getFileAsHtml(data.contractFile['@id']);
+          setFileContent(res.content || '');
+        } catch (err) {
+          setFileError('Falha ao carregar a minuta');
+        } finally {
+          setFileLoading(false);
+        }
       }
 
-      if (d.startDate) {
-        const date = new Date(d.startDate);
-        setStartDay(date.getDate().toString());
-        setStartMonth((date.getMonth() + 1).toString());
-        setStartYear(date.getFullYear().toString());
+      if (data?.peoples?.length) {
+        const resolved = await Promise.all(
+          data.peoples.map(async (sub) => {
+            if (sub.people?.name) return sub;
+            const id = (typeof sub.people === 'string' ? sub.people : sub.people?.['@id'] || '').replace(/\D/g, '');
+            if (!id) return sub;
+            try {
+              const person = await peopleActions.get(id);
+              return { ...sub, people: person };
+            } catch {
+              return sub;
+            }
+          }),
+        );
+        setSubscribers(resolved);
       }
-      if (d.endDate) {
-        const date = new Date(d.endDate);
-        setEndDay(date.getDate().toString());
-        setEndMonth((date.getMonth() + 1).toString());
-        setEndYear(date.getFullYear().toString());
-      }
-    });
+    };
 
-    statusActions.getItems({ context: 'relationship' });
+    loadData();
+
     peopleActions.getItems({
-      company: '/people/' + currentCompany.id,
+      company: currentCompany ? `/people/${currentCompany.id}` : undefined,
       link_type: 'client',
     });
-  }, [contractId, currentCompany.id]);
+  }, [contractId, currentCompany?.id]);
 
-  const fetchContractFile = useCallback(async fileId => {
-    setFileLoading(true);
-    setFileError(null);
+  const handleSignContract = async () => {
     try {
-      const response = await contractActions.getFileAsHtml(fileId);
-      setFileContent(response.content || '');
+      await contractActions.sign({ id: contractId });
+      showSuccess('Contrato assinado com sucesso');
+      const updated = await contractActions.get(contractId);
+      if (updated?.contractFile) {
+        const res = await contractActions.getFileAsHtml(updated.contractFile['@id']);
+        setFileContent(res.content || '');
+      }
     } catch (err) {
-      setFileError('Erro ao carregar o conteúdo HTML do contrato.');
-    } finally {
-      setFileLoading(false);
+      showError('Erro ao assinar o contrato');
     }
-  });
-
-  const handleSaveContent = async () => {
-    // This function is kept but effectively unused/only for programmatic saves if needed
-    // or can be removed if strictly no saving is allowed. 
-    // Keeping minimal logic or can remove entirely. 
-    // Given user requirement "remove edit button", I will remove the button but keeps the function 
-    // in case they want it back or for other logic, but removing the UI trigger.
-    // Actually, user said "retire o botão editar... vamos seguir padrão". 
-    // So the manual editing is gone. 
-  };
-
-  const handleSignContract = () => {
-    contractActions.generate({ id: contractId });
-    contractActions.sign({ id: contractId }).then(() =>
-      contractActions.get(contractId).then(async (d) => {
-        if (d.contractFile) fetchContractFile(d.contractFile['@id']);
-        if (d.peoples && d.peoples.length > 0) {
-          const resolvedPeoples = await resolvePeopleNames(d.peoples);
-          setSubscribers(resolvedPeoples);
-        }
-      }),
-    );
   };
 
   const handleAddSubscriber = async () => {
     if (!selectedPerson) {
-      showWarning('Por favor, selecione uma pessoa.');
+      showWarning('Selecione uma pessoa');
       return;
     }
     try {
-      const newSub = await contractPeopleActions.save({
+      const created = await contractPeopleActions.save({
         people: selectedPerson,
         peopleType: newSubscriberRole,
         contract: contract['@id'],
       });
-      // Enrich with person name from local people list
-      const personFromList = people?.find(p => p['@id'] === selectedPerson);
-      const enrichedSub = {
-        ...newSub,
-        people: personFromList || { '@id': selectedPerson, name: selectedPerson },
-      };
-      setSubscribers([...subscribers, enrichedSub]);
+      const person = people.find((p) => p['@id'] === selectedPerson);
+      setSubscribers([...subscribers, { ...created, people: person || { name: '—' } }]);
       setSelectedPerson(null);
       setNewSubscriberRole('Contractor');
-      showSuccess('Assinante adicionado com sucesso!');
-    } catch (err) {
-      showError('Erro ao adicionar assinante.');
+      showSuccess('Assinante adicionado');
+    } catch {
+      showError('Falha ao adicionar assinante');
     }
   };
 
-  const handleRemoveSubscriber = async subscriberId => {
+  const handleRemoveSubscriber = async (id) => {
     try {
-      await contractPeopleActions.remove(subscriberId);
-      setSubscribers(subscribers.filter(sub => sub.id !== subscriberId));
-      showSuccess('Assinante removido com sucesso!');
-    } catch (err) {
-      showError('Erro ao remover assinante.');
+      await contractPeopleActions.remove(id);
+      setSubscribers(subscribers.filter((s) => s.id !== id));
+      showSuccess('Assinante removido');
+    } catch {
+      showError('Erro ao remover assinante');
     }
   };
 
-  const handleSaveContractDetails = async () => {
-    try {
-      let formattedStartDate = '';
-      let formattedEndDate = '';
-
-      if (startDay && startMonth && startYear) {
-        formattedStartDate = `${startYear}-${startMonth.padStart(2, '0')}-${startDay.padStart(2, '0')}`;
-      }
-      if (endDay && endMonth && endYear) {
-        formattedEndDate = `${endYear}-${endMonth.padStart(2, '0')}-${endDay.padStart(2, '0')}`;
-      }
-
-      await contractActions.save({
-        startDate: formattedStartDate,
-        endDate: formattedEndDate,
-        id: contractId,
-      });
-      setEditModalVisible(false);
-      showSuccess('Detalhes atualizados com sucesso!');
-      contractActions.get(contractId);
-    } catch (err) {
-      showError('Erro ao atualizar os detalhes.');
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditModalVisible(false);
-    if (contract.startDate) {
-      const date = new Date(contract.startDate);
-      setStartDay(date.getDate().toString());
-      setStartMonth((date.getMonth() + 1).toString());
-      setStartYear(date.getFullYear().toString());
-    } else {
-      setStartDay(''); setStartMonth(''); setStartYear('');
-    }
-    if (contract.endDate) {
-      const date = new Date(contract.endDate);
-      setEndDay(date.getDate().toString());
-      setEndMonth((date.getMonth() + 1).toString());
-      setEndYear(date.getFullYear().toString());
-    } else {
-      setEndDay(''); setEndMonth(''); setEndYear('');
-    }
-  };
-
-  const handleTabPress = index => {
+  const handleTabPress = (index) => {
     setActiveTab(index);
     scrollRef.current?.scrollTo({ x: index * width, animated: true });
   };
 
-  const tabs = [
-    { key: 0, label: 'Visão Geral' },
-    { key: 1, label: 'Minuta' },
-  ];
-
-  const renderSkeletonScreen = () => (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headerProfile}>
-        <View style={[styles.skeletonCircle, { width: 64, height: 64, borderRadius: 32 }]} />
-        <View style={[styles.skeletonLine, { width: 220, height: 22, marginTop: 14 }]} />
-        <View style={[styles.skeletonLine, { width: 90, height: 12, marginTop: 8 }]} />
-      </View>
-
-      <View style={styles.tabsHeader}>
-        <View style={styles.skeletonTab} />
-        <View style={styles.skeletonTab} />
-      </View>
-
-      <ScrollView style={styles.contentContainer} contentContainerStyle={{ paddingBottom: 24 }}>
-        <View style={styles.section}>
-          <View style={[styles.skeletonLine, { width: '55%', height: 18, marginBottom: 16 }]} />
-          <View style={[styles.skeletonLine, { width: '100%', height: 14, marginBottom: 10 }]} />
-          <View style={[styles.skeletonLine, { width: '92%', height: 14, marginBottom: 10 }]} />
-          <View style={[styles.skeletonLine, { width: '84%', height: 14 }]} />
-        </View>
-
-        <View style={styles.section}>
-          <View style={[styles.skeletonLine, { width: '42%', height: 18, marginBottom: 16 }]} />
-          <View style={[styles.skeletonLine, { width: '100%', height: 54, borderRadius: 10, marginBottom: 10 }]} />
-          <View style={[styles.skeletonLine, { width: '100%', height: 54, borderRadius: 10, marginBottom: 10 }]} />
-          <View style={[styles.skeletonLine, { width: '100%', height: 54, borderRadius: 10 }]} />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-
   if (isLoading || !contract) {
-    return renderSkeletonScreen();
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.headerSkeleton} />
+        <View style={styles.infoSkeleton} />
+        <View style={styles.tabsSkeleton} />
+      </SafeAreaView>
+    );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header Profile */}
-      <View style={styles.headerProfile}>
-        <View style={styles.avatarContainer}>
-          <Icon name="description" size={32} color={colors.white} />
+      {/* Cabeçalho */}
+      <View style={styles.pageHeader}>
+        <View style={styles.avatar}>
+          <Icon name="description" size={28} color="#fff" />
         </View>
-        <Text style={styles.profileName} numberOfLines={1} ellipsizeMode="tail">{contract.contractModel?.model}</Text>
-        <Text style={styles.profileId}>ID: {contract.id}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.contractTitle} numberOfLines={1}>
+            {contract.contractModel?.model || 'Contrato sem modelo'}
+          </Text>
+          <Text style={styles.contractId}>ID: {contract.id}</Text>
+        </View>
       </View>
 
-      {/* Tabs Header */}
-      <View style={styles.tabsHeader}>
-        {tabs.map(tab => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
-            onPress={() => handleTabPress(tab.key)}>
-            <Text
-              style={[
-                styles.tabButtonText,
-                activeTab === tab.key && styles.tabButtonTextActive,
-              ]}>
-              {tab.label}
+      {/* Informações fixas */}
+      <View style={styles.fixedInfo}>
+        <View
+          style={[
+            styles.statusBox,
+            {
+              backgroundColor: `${contract.status?.color || '#64748b'}20`,
+              borderColor: contract.status?.color || '#94a3b8',
+            },
+          ]}>
+          <Text style={[styles.statusText, { color: contract.status?.color || '#334155' }]}>
+            {contract.status?.status?.toUpperCase() || '—'}
+          </Text>
+        </View>
+
+        <View style={styles.datesRow}>
+          <View style={styles.dateBlock}>
+            <Text style={styles.dateLabel}>Início</Text>
+            <Text style={styles.dateValue}>
+              {contract.startDate ? new Date(contract.startDate).toLocaleDateString('pt-BR') : '—'}
             </Text>
-            {activeTab === tab.key && <View style={styles.activeIndicator} />}
-          </TouchableOpacity>
-        ))}
+          </View>
+          <View style={styles.dateBlock}>
+            <Text style={styles.dateLabel}>Término</Text>
+            <Text style={styles.dateValue}>
+              {contract.endDate ? new Date(contract.endDate).toLocaleDateString('pt-BR') : '—'}
+            </Text>
+          </View>
+        </View>
       </View>
 
-      {/* Tabs Content */}
+      {/* Tabs */}
+      <View style={styles.tabs}>
+        <TouchableOpacity
+          style={[styles.tabItem, activeTab === 0 && styles.tabActive]}
+          onPress={() => handleTabPress(0)}>
+          <Text style={[styles.tabLabel, activeTab === 0 && styles.tabLabelActive]}>Minuta</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabItem, activeTab === 1 && styles.tabActive]}
+          onPress={() => handleTabPress(1)}>
+          <Text style={[styles.tabLabel, activeTab === 1 && styles.tabLabelActive]}>Assinantes</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Conteúdo rolável */}
       <ScrollView
         ref={scrollRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1 }}
-        onScroll={event => {
-          const contentOffsetX = event.nativeEvent.contentOffset.x;
-          const currentIndex = Math.round(contentOffsetX / width);
-          if (currentIndex !== activeTab) setActiveTab(currentIndex);
-        }}
         scrollEventThrottle={16}
-        style={styles.contentContainer}>
-        <View style={{ width, height: '100%' }}>
-          <GeneralTab
-            contract={contract}
-            subscribers={subscribers}
-            canEdit={canEdit}
-            setEditModalVisible={setEditModalVisible}
-            setPeoplePickerVisible={setPeoplePickerVisible}
-            selectedPerson={selectedPerson}
-            people={people}
-            handleAddSubscriber={handleAddSubscriber}
-            handleRemoveSubscriber={handleRemoveSubscriber}
-            newSubscriberRole={newSubscriberRole}
-            setNewSubscriberRole={setNewSubscriberRole}
-          />
-        </View>
-        <View style={{ width, height: '100%' }}>
-          <ContractFileTab
+        onScroll={(e) => {
+          const idx = Math.round(e.nativeEvent.contentOffset.x / width);
+          if (idx !== activeTab) setActiveTab(idx);
+        }}>
+        <View style={{ width, flex: 1 }}>
+          <MinutaTab
             contract={contract}
             fileContent={fileContent}
             fileLoading={fileLoading}
             fileError={fileError}
             canEdit={canEdit}
             handleSignContract={handleSignContract}
-            width={width}
+          />
+        </View>
+
+        <View style={{ width, flex: 1 }}>
+          <AssinantesTab
+            subscribers={subscribers}
+            canEdit={canEdit}
+            handleRemoveSubscriber={handleRemoveSubscriber}
+            handleAddSubscriber={handleAddSubscriber}
+            selectedPerson={selectedPerson}
+            people={people}
+            setPeoplePickerVisible={setPeoplePickerVisible}
+            newSubscriberRole={newSubscriberRole}
+            setNewSubscriberRole={setNewSubscriberRole}
           />
         </View>
       </ScrollView>
 
-      {/* Modals */}
-      <AnimatedModal
-        visible={editModalVisible}
-        onRequestClose={() => setEditModalVisible(false)}
-      >
-        <View style={styles.bottomSheetContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Editar Contrato</Text>
-            <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-              <Icon name="close" size={24} color="#666" />
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={{ maxHeight: 400 }}>
-            {/* Simple Date Pickers Implementation for brevity - same as before but styled */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Data de Início</Text>
-              <View style={styles.dateRow}>
-                <TextInput style={styles.dateInput} placeholder="Dia" value={startDay} onChangeText={setStartDay} keyboardType="numeric" maxLength={2} />
-                <TextInput style={styles.dateInput} placeholder="Mês" value={startMonth} onChangeText={setStartMonth} keyboardType="numeric" maxLength={2} />
-                <TextInput style={styles.dateInput} placeholder="Ano" value={startYear} onChangeText={setStartYear} keyboardType="numeric" maxLength={4} />
-              </View>
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Data de Término</Text>
-              <View style={styles.dateRow}>
-                <TextInput style={styles.dateInput} placeholder="Dia" value={endDay} onChangeText={setEndDay} keyboardType="numeric" maxLength={2} />
-                <TextInput style={styles.dateInput} placeholder="Mês" value={endMonth} onChangeText={setEndMonth} keyboardType="numeric" maxLength={2} />
-                <TextInput style={styles.dateInput} placeholder="Ano" value={endYear} onChangeText={setEndYear} keyboardType="numeric" maxLength={4} />
-              </View>
-            </View>
-          </ScrollView>
-          <View style={styles.modalFooter}>
-            <TouchableOpacity style={styles.cancelButton} onPress={handleCancelEdit}>
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.saveButton} onPress={handleSaveContractDetails}>
-              <Text style={styles.saveButtonText}>Salvar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </AnimatedModal>
-
-      <AnimatedModal
-        visible={peoplePickerVisible}
-        onRequestClose={() => setPeoplePickerVisible(false)}
-      >
-        <View style={styles.bottomSheetContent}>
+      {/* Modal */}
+      <AnimatedModal visible={peoplePickerVisible} onRequestClose={() => setPeoplePickerVisible(false)}>
+        <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Selecionar Pessoa</Text>
             <TouchableOpacity onPress={() => setPeoplePickerVisible(false)}>
-              <Icon name="close" size={24} color="#666" />
+              <Icon name="close" size={28} color="#64748b" />
             </TouchableOpacity>
           </View>
-          <ScrollView style={{ maxHeight: 400 }}>
-            {people?.map(person => (
+          <ScrollView>
+            {people?.map((p) => (
               <TouchableOpacity
-                key={person['@id']}
-                style={[styles.personItem, selectedPerson === person['@id'] && styles.personItemActive]}
-                onPress={() => { setSelectedPerson(person['@id']); setPeoplePickerVisible(false); }}
-              >
-                <Text style={styles.personNameList} numberOfLines={1} ellipsizeMode="tail">{person.name}</Text>
-                {selectedPerson === person['@id'] && <Icon name="check" size={20} color={colors.primary} />}
+                key={p['@id']}
+                style={[styles.personRow, selectedPerson === p['@id'] && styles.personRowSelected]}
+                onPress={() => {
+                  setSelectedPerson(p['@id']);
+                  setPeoplePickerVisible(false);
+                }}>
+                <Text style={styles.personName}>{p.name}</Text>
+                {selectedPerson === p['@id'] && (
+                  <Icon name="check-circle" size={24} color={colors.primary} />
+                )}
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
       </AnimatedModal>
-
     </SafeAreaView>
   );
 };
@@ -689,475 +424,222 @@ const ContractDetails = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#f8fafc',
   },
-  headerProfile: {
+
+  pageHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 20,
-    backgroundColor: '#F8FAFC',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
   },
-  avatarContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginRight: 16,
   },
-  profileName: {
+  contractTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 4,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    maxWidth: '86%',
+    color: '#0f172a',
   },
-  profileId: {
-    fontSize: 14,
-    color: '#64748B',
-    fontWeight: '500',
+  contractId: {
+    fontSize: 13,
+    color: '#64748b',
+    marginTop: 2,
   },
-  tabsHeader: {
+
+  fixedInfo: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  statusBox: {
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 30,
+    borderWidth: 1.5,
+    marginBottom: 16,
+  },
+  statusText: {
+    fontSize: 17,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  datesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  dateBlock: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 10,
+    marginHorizontal: 6,
+  },
+  dateLabel: { fontSize: 12, color: '#64748b', marginBottom: 4 },
+  dateValue: { fontSize: 16, fontWeight: '700', color: '#0f172a' },
+
+  tabs: {
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: '#e2e8f0',
   },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 16,
-    position: 'relative',
-  },
-  tabButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  tabButtonTextActive: {
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    width: '60%',
-    height: 3,
-    backgroundColor: colors.primary,
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  tabContent: {
-    flex: 1,
-  },
+  tabItem: { flex: 1, paddingVertical: 16, alignItems: 'center' },
+  tabActive: { borderBottomWidth: 3, borderBottomColor: colors.primary },
+  tabLabel: { fontSize: 15, fontWeight: '600', color: '#64748b' },
+  tabLabelActive: { color: colors.primary, fontWeight: '700' },
+
+  tabScroll: { flex: 1 },
+
   section: {
     backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginTop: 16,
     borderRadius: 12,
     padding: 16,
-    elevation: 2,
+    elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    shadowRadius: 3,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 12,
-  },
-  editButtonSmall: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  editButtonTextSmall: {
-    fontSize: 12,
-    color: '#fff',
-    marginLeft: 4,
-    fontWeight: '600',
-  },
-  infoRow: {
+    color: '#0f172a',
     marginBottom: 16,
   },
-  infoLabel: {
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: 6,
-    fontWeight: '500',
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  datesContainer: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  dateItem: {
-    flex: 1,
-  },
-  dateLabel: {
-    fontSize: 12,
-    color: '#64748B',
-    marginBottom: 4,
-  },
-  dateValue: {
-    fontSize: 14,
-    color: '#0F172A',
-    fontWeight: '600',
-  },
-  addSubscriberContainer: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
+
+  centerContainer: { alignItems: 'center', paddingVertical: 60 },
+  loadingText: { marginTop: 16, color: '#64748b', fontSize: 15 },
+  emptyText: { marginTop: 16, color: '#94a3b8', fontSize: 15 },
+  errorText: { color: colors.error, textAlign: 'center', padding: 24 },
+
+  htmlWrapper: { backgroundColor: '#fff' },
+
+  // Botão fixo na parte inferior
+  fixedSignButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
     padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  subSectionTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginBottom: 12,
-  },
-  selectInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  roleSelectContainer: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  addSubscriberButton: {
-    backgroundColor: colors.primary,
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  disabledButton: {
-    backgroundColor: '#94A3B8',
-  },
-  addSubscriberButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  subscriberItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  subscriberAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    opacity: 0.8,
-  },
-  subscriberName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#0F172A',
-    maxWidth: '92%',
-  },
-  subscriberRole: {
-    fontSize: 13,
-    color: '#64748B',
-  },
-  removeButton: {
-    padding: 8,
-  },
-  emptyState: {
-    alignItems: 'center',
-    padding: 24,
-  },
-  emptyText: {
-    color: '#94A3B8',
-    marginTop: 8,
-    fontSize: 15,
-  },
-  saveContentButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.success,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  saveContentButtonText: {
-    fontSize: 14,
-    color: '#fff',
-    marginLeft: 6,
-    fontWeight: '600',
-  },
-  htmlContainer: {
-    backgroundColor: '#fff',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16, // safe area no iOS
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
   },
   signButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
-    padding: 16,
+    paddingVertical: 16,
     borderRadius: 12,
-    marginTop: 24,
-    elevation: 3,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
   },
   signButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-  },
-  loadingContainer: {
-    padding: 24,
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: '#64748B',
-    marginTop: 12,
-  },
-  skeletonCircle: {
-    backgroundColor: '#E2E8F0',
-  },
-  skeletonLine: {
-    backgroundColor: '#E2E8F0',
-    borderRadius: 8,
-  },
-  skeletonTab: {
-    flex: 1,
-    height: 44,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 10,
-    backgroundColor: '#E2E8F0',
-  },
-  bottomSheetContent: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: 40,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 8,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  dateInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    padding: 10,
-    textAlign: 'center',
-    fontSize: 16,
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  cancelButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  saveButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  personItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  personItemActive: {
-    backgroundColor: '#F0F9FF',
-  },
-  personNameList: {
-    fontSize: 16,
-    color: '#334155',
-    flex: 1,
-    paddingRight: 8,
-  },
-  infoBox: {
-    backgroundColor: '#FFFBEB',
-    padding: 16,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.warning,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    marginTop: 20
-  },
-  infoBoxTitle: {
-    color: '#92400E',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  infoBoxText: {
-    color: '#92400E',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 4,
+    marginLeft: 12,
   },
 
-  roleSelectionContainer: {
-    marginBottom: 12,
-  },
-  inputLabel: {
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  roleButtonsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  roleButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  roleButtonActive: {
-    backgroundColor: '#E0F2FE',
-    borderColor: colors.primary,
-  },
-  roleButtonText: {
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  roleButtonTextActive: {
-    color: colors.primary,
-  },
-  headerActions: {
+  // estilos da aba Assinantes (mantidos resumidos)
+  subscriberCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  editModeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    borderRadius: 6,
-    backgroundColor: '#F1F5F9',
-  },
-  editModeButtonActive: {
-    backgroundColor: '#E0F2FE',
-  },
-  editModeButtonText: {
-    fontSize: 13,
-    marginLeft: 6,
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  htmlInput: {
-    minHeight: 300,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    backgroundColor: '#f8fafc',
     padding: 12,
-    fontSize: 14,
-    color: '#334155',
-    fontFamily: 'monospace',
+    borderRadius: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
+  subscriberAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  subscriberName: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
+  subscriberRole: { fontSize: 13, color: '#64748b' },
+
+  addForm: {
+    marginTop: 24,
+    backgroundColor: '#f8fafc',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  addTitle: { fontSize: 16, fontWeight: '700', marginBottom: 16 },
+  selectField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 16,
+  },
+  label: { fontSize: 14, color: '#64748b', marginBottom: 8, fontWeight: '500' },
+  roleRow: { flexDirection: 'row', gap: 12 },
+  roleBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  roleBtnActive: { backgroundColor: '#e0f2fe', borderColor: colors.primary },
+  roleText: { fontWeight: '600', color: '#64748b' },
+  addButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  addButtonDisabled: { backgroundColor: '#cbd5e1' },
+  addButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+
+  modalContent: { padding: 20, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  modalTitle: { fontSize: 19, fontWeight: '700' },
+  personRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  personRowSelected: { backgroundColor: '#f0f9ff' },
+  personName: { fontSize: 16, color: '#0f172a', flex: 1 },
+
+  headerSkeleton: { height: 100, backgroundColor: '#e2e8f0', margin: 16, borderRadius: 12 },
+  infoSkeleton: { height: 140, backgroundColor: '#e2e8f0', marginHorizontal: 16, marginBottom: 8, borderRadius: 12 },
+  tabsSkeleton: { height: 56, backgroundColor: '#e2e8f0', marginHorizontal: 16, borderRadius: 12 },
 });
 
 export default ContractDetails;
