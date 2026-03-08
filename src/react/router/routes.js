@@ -1,4 +1,6 @@
 import Contract from '@controleonline/ui-contracts/src/react/pages/ContractDetails';
+import ContractsPage from '@controleonline/ui-contracts/src/react/pages/ContractsPage';
+
 import { env } from '@env';
 
 const contractRoutes = [
@@ -12,7 +14,17 @@ const contractRoutes = [
       showBottomToolBar: true,
     },
   },
-
+  {
+    name: 'ContractsIndex',
+    component: ContractsPage,
+    options: {
+      showCompanyFilter: true,
+      showBottomToolBar: true,
+      headerShown: true,
+      headerBackVisible: true,
+      title: 'Contratos',
+    },
+  },
 ];
 
 export default contractRoutes;
