@@ -425,7 +425,7 @@ const ContractDetails = () => {
     if (currentCompany?.id) {
       peopleActions.getItems({
         company: '/people/' + currentCompany.id,
-        link_type: 'client',
+        linkType: 'client',
       });
     }
   }, [contractId, currentCompany?.id]);
