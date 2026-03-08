@@ -1,8 +1,6 @@
 import Contract from '@controleonline/ui-contracts/src/react/pages/ContractDetails';
 import ContractsPage from '@controleonline/ui-contracts/src/react/pages/ContractsPage';
 
-import { env } from '@env';
-
 const contractRoutes = [
   {
     name: 'ContractDetails',
