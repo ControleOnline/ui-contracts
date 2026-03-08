@@ -77,8 +77,9 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
   };
 
   const handleSubmit = async () => {
-    if (!selectedModel) {
-      showError('Por favor, selecione um modelo de contrato.');
+    const startDate = formatDate(startYear, startMonth, startDay);
+    if (!selectedModel || !startDate) {
+      showError('Por favor, preencha os campos obrigatorios.');
       return;
     }
 
@@ -86,8 +87,8 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
     try {
       const contractData = {
         contractModel: selectedModel,
-        beneficiary: 'people/' + currentCompany.id,
-        startDate: formatDate(startYear, startMonth, startDay),
+        beneficiary: `/people/${currentCompany.id}`,
+        startDate,
       };
 
       await contractActions.save(contractData);
@@ -225,7 +226,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
 
           {/* Data de Início */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Data de Início</Text>
+            <Text style={styles.inputLabel}>Data de Início <Text style={styles.required}>*</Text></Text>
             <View style={styles.dateContainer}>
               {/* Dia */}
               <View style={styles.datePickerContainer}>
@@ -297,10 +298,15 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
           <TouchableOpacity
             style={[
               styles.createButton,
-              (!selectedModel || isLoading) && styles.createButtonDisabled,
+              (!selectedModel ||
+                !formatDate(startYear, startMonth, startDay) ||
+                isLoading) &&
+                styles.createButtonDisabled,
             ]}
             onPress={handleSubmit}
-            disabled={isLoading || !selectedModel}>
+            disabled={
+              isLoading || !selectedModel || !formatDate(startYear, startMonth, startDay)
+            }>
             {isLoading ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
@@ -554,3 +560,4 @@ const styles = StyleSheet.create({
 });
 
 export default CreateContractModal;
+
