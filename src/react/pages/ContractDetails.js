@@ -27,7 +27,7 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
         style={styles.tabScroll}
         contentContainerStyle={{
           padding: 16,
-          paddingBottom: canEdit ? 120 : 40, // espaço para botão fixo
+          paddingBottom: canEdit ? 120 : 40,
         }}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Minuta do Contrato</Text>
@@ -39,7 +39,7 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
             </View>
           ) : fileError ? (
             <Text style={styles.errorText}>{fileError}</Text>
-          ) : contract.contractFile ? (
+          ) : fileContent ? (
             <View style={styles.htmlWrapper}>
               <RenderHTML
                 contentWidth={width - 32}
@@ -50,8 +50,8 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
             </View>
           ) : (
             <View style={styles.centerContainer}>
-              <Icon name="description" size={64} color={colors.textSecondary} />
-              <Text style={styles.emptyText}>Nenhuma minuta anexada</Text>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.loadingText}>Gerando minuta...</Text>
             </View>
           )}
         </View>
@@ -192,7 +192,17 @@ const ContractDetails = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      const data = await contractActions.get(contractId);
+      let data = await contractActions.get(contractId);
+
+      if (!data?.contractFile) {
+        try {
+          await contractActions.generate({ id: contractId });
+          data = await contractActions.get(contractId);
+        } catch (e) {
+          console.log('Erro ao gerar minuta', e);
+        }
+      }
+
       if (data?.contractFile) {
         setFileLoading(true);
         try {
@@ -240,7 +250,7 @@ const ContractDetails = () => {
         const res = await contractActions.getFileAsHtml(updated.contractFile['@id']);
         setFileContent(res.content || '');
       }
-    } catch (err) {
+    } catch {
       showError('Erro ao assinar o contrato');
     }
   };
@@ -293,7 +303,6 @@ const ContractDetails = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* TOPO FIXO - Título do contrato restaurado */}
       <View style={styles.topHeader}>
         <View style={styles.topAvatar}>
           <Icon name="description" size={32} color="#fff" />
@@ -306,7 +315,6 @@ const ContractDetails = () => {
         </View>
       </View>
 
-      {/* Informações gerais fixas */}
       <View style={styles.fixedInfo}>
         <View
           style={[
@@ -337,7 +345,6 @@ const ContractDetails = () => {
         </View>
       </View>
 
-      {/* Abas */}
       <View style={styles.tabs}>
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 0 && styles.tabActive]}
@@ -351,7 +358,6 @@ const ContractDetails = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Conteúdo das abas */}
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -387,7 +393,6 @@ const ContractDetails = () => {
         </View>
       </ScrollView>
 
-      {/* Modal de seleção de pessoa */}
       <AnimatedModal visible={peoplePickerVisible} onRequestClose={() => setPeoplePickerVisible(false)}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
@@ -522,11 +527,6 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 34 : 16,
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
   },
   signButton: {
     flexDirection: 'row',
@@ -538,7 +538,6 @@ const styles = StyleSheet.create({
   },
   signButtonText: { color: '#fff', fontSize: 16, fontWeight: '700', marginLeft: 12 },
 
-  // Estilos da aba Assinantes (resumidos)
   subscriberCard: {
     flexDirection: 'row',
     alignItems: 'center',
