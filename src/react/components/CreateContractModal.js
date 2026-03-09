@@ -21,7 +21,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
   const contractActions = contractStore?.actions || {};
   const peopleStore = useStores(state => state.people);
   const peopleGetters = peopleStore?.getters || {};
-  const modelsStore = useStores(state => state.model);
+  const modelsStore = useStores(state => state.models);
   const modelsActions = modelsStore?.actions || {};
 
   const { currentCompany } = peopleGetters;
@@ -56,7 +56,15 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
   const loadContractModels = async () => {
     setLoadingModels(true);
     try {
-      const response = await modelsActions.getItems({ context: 'contract' });
+      if (!currentCompany?.id) {
+        setContractModels([]);
+        return;
+      }
+
+      const response = await modelsActions.getItems({
+        context: 'contract',
+        people: currentCompany.id,
+      });
 
       setContractModels(response);
     } catch (error) {
