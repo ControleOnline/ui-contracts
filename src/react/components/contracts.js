@@ -94,7 +94,7 @@ const Contracts = ({client}) => {
       }
 
       contractActions.getItems({
-        beneficiary: currentCompany.id,
+        provider: currentCompany.id,
         'contractModel.context': 'contract',
         'peoples.people': clientIri,
         'peoples.people.id': clientId,
@@ -139,7 +139,7 @@ const Contracts = ({client}) => {
           <Icon name="person" size={16} color="#666" />
           <Text style={contractStyles.infoLabel}>Beneficiário:</Text>
           <Text style={contractStyles.infoValue}>
-            {contract.beneficiary.name}
+            {contract.provider.name}
           </Text>
         </View>
 

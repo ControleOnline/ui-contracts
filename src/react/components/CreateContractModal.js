@@ -95,7 +95,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
     try {
       const contractData = {
         contractModel: selectedModel,
-        beneficiary: `/people/${currentCompany.id}`,
+        provider: `/people/${currentCompany.id}`,
         startDate,
       };
 

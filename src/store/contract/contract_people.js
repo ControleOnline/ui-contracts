@@ -55,7 +55,7 @@ items:[],
         label: "peopleType",
         externalFilter: false,
         list: [
-          { value: "Beneficiary", label: "Beneficiary" },
+          { value: "Provider", label: "Provider" },
           { value: "Contractor", label: "Contractor" },
           { value: "Witness", label: "Witness" },
         ],

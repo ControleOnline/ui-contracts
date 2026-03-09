@@ -75,7 +75,7 @@ const ContractsPage = () => {
       const rightType = String(right?.peopleType || '').trim().toLowerCase();
 
       const weight = type => {
-        if (type === 'beneficiary') return 0;
+        if (type === 'provider') return 0;
         if (type === 'contractor') return 1;
         if (type === 'witness') return 2;
         return 3;
@@ -90,7 +90,7 @@ const ContractsPage = () => {
       contract?.customer,
       contract?.contractor,
       contract?.people,
-      contract?.beneficiary,
+      contract?.provider,
     ].filter(Boolean);
   };
 
@@ -166,7 +166,7 @@ const ContractsPage = () => {
       }
 
       const params = {
-        beneficiary: currentCompany.id,
+        provider: currentCompany.id,
         'contractModel.context': 'contract',
         page: page ?? currentPage,
         itemsPerPage,

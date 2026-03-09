@@ -5,7 +5,7 @@ export default function getConfigs(context, myCompany, $components, $store) {
     externalFilters: false,
     store: "contract",
     status: [context],
-    companyParam: "beneficiary",
+    companyParam: "provider",
     add: true,
     delete: false,
     filters: true,
