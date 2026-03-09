@@ -184,7 +184,6 @@ const ContractsPage = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: 'Contratos',
-      headerRight: () => null,
     });
   }, [navigation]);
 

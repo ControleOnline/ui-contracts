@@ -20,6 +20,7 @@ const contractRoutes = [
       showBottomToolBar: true,
       headerShown: true,
       headerBackVisible: true,
+      companyFilterMode: 'icon',
       title: 'Contratos',
     },
   },
