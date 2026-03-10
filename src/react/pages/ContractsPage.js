@@ -350,14 +350,14 @@ const ContractsPage = () => {
             <Icon name="calendar" size={16} color="#64748B" />
             <Text style={contractStyles.dateLabel}>Início</Text>
             <Text style={contractStyles.dateValue}>
-              {new Date(contract.startDate).toLocaleDateString('pt-BR')}
+              {new Date(contract.startDate).toLocaleDateString('pt-br')}
             </Text>
           </View>
           <View style={contractStyles.dateItem}>
             <Icon name="calendar" size={16} color="#64748B" />
             <Text style={contractStyles.dateLabel}>Término</Text>
             <Text style={contractStyles.dateValue}>
-              {new Date(contract.endDate).toLocaleDateString('pt-BR')}
+              {new Date(contract.endDate).toLocaleDateString('pt-br')}
             </Text>
           </View>
         </View>
