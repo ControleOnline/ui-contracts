@@ -21,7 +21,7 @@ const contractRoutes = [
       headerShown: true,
       headerBackVisible: true,
       companyFilterMode: 'icon',
-      title: 'Contratos',
+      title: global.t?.t("ui-contracts", "title", "contracts"),
     },
   },
 ];
