@@ -137,7 +137,7 @@ const Contracts = ({client}) => {
       <View style={contractStyles.contractBody}>
         <View style={contractStyles.infoRow}>
           <Icon name="person" size={16} color="#666" />
-          <Text style={contractStyles.infoLabel}>Beneficiário:</Text>
+          <Text style={contractStyles.infoLabel}>{global.t?.t('contract', 'label', 'beneficiary')}</Text>
           <Text style={contractStyles.infoValue}>
             {contract.provider.name}
           </Text>
@@ -146,14 +146,14 @@ const Contracts = ({client}) => {
         <View style={contractStyles.dateContainer}>
           <View style={contractStyles.dateItem}>
             <Icon name="event" size={16} color="#666" />
-            <Text style={contractStyles.dateLabel}>Início</Text>
+            <Text style={contractStyles.dateLabel}>{global.t?.t('contract', 'label', 'start')}</Text>
             <Text style={contractStyles.dateValue}>
               {new Date(contract.startDate).toLocaleDateString('pt-br')}
             </Text>
           </View>
           <View style={contractStyles.dateItem}>
             <Icon name="event-available" size={16} color="#666" />
-            <Text style={contractStyles.dateLabel}>Término</Text>
+            <Text style={contractStyles.dateLabel}>{global.t?.t('contract', 'label', 'end')}</Text>
             <Text style={contractStyles.dateValue}>
               {new Date(contract.endDate).toLocaleDateString('pt-br')}
             </Text>
@@ -166,7 +166,7 @@ const Contracts = ({client}) => {
         onPress={() =>
           navigation.navigate('ContractDetails', {contractId: contract.id})
         }>
-        <Text style={contractStyles.viewButtonText}>Ver Detalhes</Text>
+        <Text style={contractStyles.viewButtonText}>{global.t?.t('contract', 'label', 'viewDetails')}</Text>
         <Icon name="arrow-forward" size={16} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
@@ -177,7 +177,12 @@ const Contracts = ({client}) => {
       <View style={contractStyles.header}>
         <Text style={contractStyles.headerTitle}>{global.t?.t('contract', 'label', 'contract')}</Text>
         <Text style={contractStyles.headerSubtitle}>
-          {contractsByClient.length} {global.t?.t('contract', 'label', 'contract')}{contractsByClient.length !== 1 ? 's' : ''}
+          {contractsByClient.length}{' '}
+          {global.t?.t(
+            'contract',
+            'label',
+            contractsByClient.length === 1 ? 'contract' : 'contracts',
+          )}
         </Text>
       </View>
 
