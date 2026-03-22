@@ -18,9 +18,87 @@ import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedM
 import { colors } from '@controleonline/../../src/styles/colors';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+
+const PdfViewerFromContent = ({ content }) => {
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!content || content.length === 0) {
+      setError('Nenhum conteúdo de PDF recebido');
+      return;
+    }
+
+    let url = null;
+
+    try {
+      // NÃO modifica, limpa ou mascara nada — assume que content é base64 puro
+      console.log('Tentando decodificar base64. Tamanho da string:', content.length);
+      console.log('Primeiros 20 caracteres (deve começar com JVBER...):', content.substring(0, 20));
+
+      const byteCharacters = atob(content); // Decodifica diretamente
+      const byteNumbers = new Uint8Array(byteCharacters.length);
+
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+
+      const blob = new Blob([byteNumbers], { type: 'application/pdf' });
+      console.log('Blob criado. Tamanho final:', blob.size, 'bytes');
+
+      url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+    } catch (err) {
+      console.error('Erro ao processar PDF (provavelmente não é base64 válido):', err);
+      setError(
+        'Não foi possível exibir o PDF.\n\n' +
+        'O conteúdo recebido não é um base64 válido ou está corrompido.\n' +
+        'Tamanho recebido: ' + content.length + ' caracteres.\n'
+      );
+    }
+
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [content]);
+
+  if (error) {
+    return (
+      <View style={{ alignItems: 'center', justifyContent: 'center', height: height * 0.75, padding: 30 }}>
+        <Icon name="error-outline" size={64} color="red" />
+        <Text style={{ color: 'red', fontSize: 16, textAlign: 'center', marginTop: 16, lineHeight: 24 }}>
+          {error}
+        </Text>
+      </View>
+    );
+  }
+
+  if (!pdfUrl) {
+    return (
+      <View style={{ alignItems: 'center', justifyContent: 'center', height: height * 0.75 }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: '#64748b', fontSize: 15 }}>
+          Preparando visualização do PDF...
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ height: height * 0.75, width: '100%' }}>
+      <iframe
+        title="pdf-viewer"
+        src={pdfUrl}
+        style={{ width: '100%', height: '100%', border: 'none' }}
+      />
+    </View>
+  );
+};
 
 const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, handleSignContract }) => {
+  const isHTML = fileContent?.trim?.().startsWith?.('<') ?? false;
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
@@ -41,12 +119,21 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
             <Text style={styles.errorText}>{fileError}</Text>
           ) : fileContent ? (
             <View style={styles.htmlWrapper}>
-              <RenderHTML
-                contentWidth={width - 32}
-                source={{ html: fileContent }}
-                ignoredDomTags={['meta', 'title']}
-                baseStyle={{ color: '#334155', lineHeight: 24 }}
-              />
+              {isHTML ? (
+                <RenderHTML
+                  contentWidth={width - 32}
+                  source={{ html: fileContent }}
+                  ignoredDomTags={['meta', 'title']}
+                  baseStyle={{ color: '#334155', lineHeight: 24 }}
+                />
+              ) : Platform.OS === 'web' ? (
+                <PdfViewerFromContent content={fileContent} />
+              ) : (
+                <View style={styles.centerContainer}>
+                  <Icon name="picture-as-pdf" size={64} color={colors.primary} />
+                  <Text style={styles.loadingText}>PDF não suportado inline no mobile</Text>
+                </View>
+              )}
             </View>
           ) : (
             <View style={styles.centerContainer}>
@@ -206,9 +293,9 @@ const ContractDetails = () => {
       if (data?.contractFile) {
         setFileLoading(true);
         try {
-          const res = await contractActions.getFileAsHtml(data.contractFile['@id']);
+          const res = await contractActions.getFileContent(data.contractFile['@id']);
           setFileContent(res.content || '');
-        } catch (err) {
+        } catch {
           setFileError('Falha ao carregar a minuta');
         } finally {
           setFileLoading(false);
@@ -247,7 +334,7 @@ const ContractDetails = () => {
       showSuccess('Contrato assinado com sucesso');
       const updated = await contractActions.get(contractId);
       if (updated?.contractFile) {
-        const res = await contractActions.getFileAsHtml(updated.contractFile['@id']);
+        const res = await contractActions.getFileContent(updated.contractFile['@id']);
         setFileContent(res.content || '');
       }
     } catch {
@@ -510,10 +597,26 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#0f172a', marginBottom: 16 },
 
-  centerContainer: { alignItems: 'center', paddingVertical: 60 },
-  loadingText: { marginTop: 16, color: '#64748b', fontSize: 15 },
-  emptyText: { marginTop: 16, color: '#94a3b8', fontSize: 15 },
-  errorText: { color: colors.error, textAlign: 'center', padding: 24 },
+  centerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60
+  },
+  loadingText: {
+    marginTop: 16,
+    color: '#64748b',
+    fontSize: 15
+  },
+  emptyText: {
+    marginTop: 16,
+    color: '#94a3b8',
+    fontSize: 15
+  },
+  errorText: {
+    color: colors.error,
+    textAlign: 'center',
+    padding: 24
+  },
 
   htmlWrapper: { backgroundColor: '#fff' },
 

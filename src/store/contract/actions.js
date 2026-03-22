@@ -48,7 +48,7 @@ export const sign = ({ commit, getters }, params) => {
     });
 };
 
-export const getFileAsHtml = ({ commit, getters }, params) => {
+export const getFileContent = ({ commit, getters }, params) => {
   let id = params.id;
   delete params.id;
 
