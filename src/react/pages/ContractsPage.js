@@ -33,6 +33,7 @@ const ContractsPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [allContracts, setAllContracts] = useState([]);
   const [peopleNameById, setPeopleNameById] = useState({});
+  const [peopleTypeById, setPeopleTypeById] = useState({});
   const normalizeDigits = value => String(value || '').replace(/\D/g, '');
   const normalizeText = value => String(value || '').trim();
 
@@ -67,6 +68,19 @@ const ContractsPage = () => {
     const personId = extractPeopleId(person);
     return personId ? peopleNameById[personId] || '' : '';
   };
+
+  const getResolvedPeopleType = person => {
+    if (person && typeof person === 'object' && person?.peopleType) {
+      return String(person.peopleType || '').trim().toUpperCase();
+    }
+
+    const personId = extractPeopleId(person);
+    return personId
+      ? String(peopleTypeById[personId] || '').trim().toUpperCase()
+      : '';
+  };
+
+  const isLegalEntity = person => getResolvedPeopleType(person) === 'J';
 
   const getContractPartyCandidates = contract => {
     const participants = Array.isArray(contract?.peoples) ? contract.peoples : [];
@@ -137,6 +151,10 @@ const ContractsPage = () => {
         continue;
       }
 
+      if (!isLegalEntity(candidate)) {
+        continue;
+      }
+
       const name = getResolvedPeopleName(candidate);
       if (name) {
         return name;
@@ -151,6 +169,10 @@ const ContractsPage = () => {
     return candidates.some(candidate => {
       const personId = extractPeopleId(candidate);
       if (!personId || isIgnoredContractPartyId(contract, personId)) {
+        return false;
+      }
+
+      if (isCurrentCompanyPerson(candidate) || !isLegalEntity(candidate)) {
         return false;
       }
 
@@ -228,8 +250,13 @@ const ContractsPage = () => {
           return;
         }
 
+        if (isCurrentCompanyPerson(candidate)) {
+          return;
+        }
+
         const name = getResolvedPeopleName(candidate);
-        if (!name && !peopleNameById[personId]) {
+        const peopleType = getResolvedPeopleType(candidate);
+        if ((!name || !peopleType) && (!peopleNameById[personId] || !peopleTypeById[personId])) {
           missingIds.add(personId);
         }
       });
@@ -249,9 +276,10 @@ const ContractsPage = () => {
             return {
               personId,
               name: resolvePeopleName(person),
+              peopleType: String(person?.peopleType || '').trim().toUpperCase(),
             };
           } catch (fetchError) {
-            return { personId, name: '' };
+            return { personId, name: '', peopleType: '' };
           }
         }),
       );
@@ -265,6 +293,16 @@ const ContractsPage = () => {
         fetchedPeople.forEach(({ personId, name }) => {
           if (name && !next[personId]) {
             next[personId] = name;
+          }
+        });
+        return next;
+      });
+
+      setPeopleTypeById(prev => {
+        const next = { ...prev };
+        fetchedPeople.forEach(({ personId, peopleType }) => {
+          if (peopleType && !next[personId]) {
+            next[personId] = peopleType;
           }
         });
         return next;
