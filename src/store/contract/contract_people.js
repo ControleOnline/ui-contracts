@@ -54,6 +54,8 @@ items:[],
         align: "left",
         label: "peopleType",
         externalFilter: false,
+
+        // @todo traduzir o label?
         list: [
           { value: "Provider", label: "Provider" },
           { value: "Contractor", label: "Contractor" },

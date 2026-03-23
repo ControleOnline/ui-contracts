@@ -47,7 +47,7 @@ items:[],
         format: function (value, column, row) {
           let peoples = [];
           row.peoples.forEach((people, i) => {
-            if (people.peopleType == "Contractor")
+            if (people.peopleType == "Contractor") // nunca traduzir
               peoples.push(people.people.name);
           });
           return peoples;

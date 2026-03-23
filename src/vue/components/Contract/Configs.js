@@ -26,7 +26,7 @@ export default function getConfigs(context, myCompany, $components, $store) {
           },
         },
         filters: {
-          contract: "Contractor",
+          contract: "Contractor", // @todo // traduzir?
           company: "/contract/" + myCompany.id,
         },
         companyParam:false,
@@ -45,7 +45,7 @@ export default function getConfigs(context, myCompany, $components, $store) {
       },
       peoples: {
         filters: {
-          people_type: "Contractor",
+          people_type: "Contractor", // nunca traduzir
           company: "/people/" + myCompany.id,
         },
       },

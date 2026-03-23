@@ -98,6 +98,11 @@ const PdfViewerFromContent = ({ content }) => {
 
 const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, handleSignContract }) => {
   const isHTML = fileContent?.trim?.().startsWith?.('<') ?? false;
+  const contractDocumentLabel =
+    contract?.status?.realStatus === 'closed'
+      ? global.t?.t('contract', 'label', 'contract')
+      : global.t?.t('contract', 'label', 'draft');
+  const loadingDocumentLabel = contractDocumentLabel || 'documento';
 
   return (
     <View style={{ flex: 1 }}>
@@ -108,12 +113,12 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
           paddingBottom: canEdit ? 120 : 40,
         }}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Minuta do Contrato</Text>
+          <Text style={styles.sectionTitle}>{contractDocumentLabel}</Text>
 
           {fileLoading ? (
             <View style={styles.centerContainer}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={styles.loadingText}>Carregando minuta...</Text>
+              <Text style={styles.loadingText}>{`Carregando ${loadingDocumentLabel}...`}</Text>
             </View>
           ) : fileError ? (
             <Text style={styles.errorText}>{fileError}</Text>
@@ -138,7 +143,7 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
           ) : (
             <View style={styles.centerContainer}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={styles.loadingText}>Gerando minuta...</Text>
+              <Text style={styles.loadingText}>{`Gerando ${loadingDocumentLabel}...`}</Text>
             </View>
           )}
         </View>
@@ -170,12 +175,12 @@ const AssinantesTab = ({
   return (
     <ScrollView style={styles.tabScroll} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Assinantes</Text>
+        <Text style={styles.sectionTitle}>{global.t?.t('contract', 'label', 'signatories')}</Text>
 
         {subscribers.length === 0 ? (
           <View style={styles.centerContainer}>
             <Icon name="people" size={64} color={colors.textSecondary} />
-            <Text style={styles.emptyText}>Nenhum assinante cadastrado</Text>
+            <Text style={styles.emptyText}>{global.t?.t('contract', 'label', 'noSignatories')}</Text>
           </View>
         ) : (
           subscribers.map((sub) => (
@@ -184,7 +189,7 @@ const AssinantesTab = ({
                 <Icon name="person" size={24} color="#fff" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.subscriberName}>{sub.people?.name || 'Nome não disponível'}</Text>
+                <Text style={styles.subscriberName}>{sub.people?.name || global.t?.t('contract', 'label', 'nameNotAvailable')}</Text>
                 <Text style={styles.subscriberRole}>{sub.peopleType}</Text>
               </View>
               {canEdit && (
@@ -198,33 +203,33 @@ const AssinantesTab = ({
 
         {canEdit && (
           <View style={styles.addForm}>
-            <Text style={styles.addTitle}>Adicionar assinante</Text>
+            <Text style={styles.addTitle}>{global.t?.t('contract', 'label', 'addSignatory')}</Text>
 
             <TouchableOpacity style={styles.selectField} onPress={() => setPeoplePickerVisible(true)}>
               <Icon name="person-outline" size={20} color={colors.primary} style={{ marginRight: 12 }} />
               <Text style={{ flex: 1, color: selectedPerson ? '#0f172a' : '#94a3b8' }}>
                 {selectedPerson
-                  ? people?.find((p) => p['@id'] === selectedPerson)?.name || 'Selecionado'
-                  : 'Selecionar pessoa'}
+                  ? people?.find((p) => p['@id'] === selectedPerson)?.name || global.t?.t('contract', 'label', 'selected')
+                  : global.t?.t('contract', 'label', 'selectPerson')}
               </Text>
               <Icon name="arrow-drop-down" size={24} color="#64748b" />
             </TouchableOpacity>
 
             <View style={{ marginVertical: 12 }}>
-              <Text style={styles.label}>Função</Text>
+              <Text style={styles.label}>{global.t?.t('contract', 'label', 'role')}</Text>
               <View style={styles.roleRow}>
                 <TouchableOpacity
                   style={[styles.roleBtn, newSubscriberRole === 'Contractor' && styles.roleBtnActive]}
                   onPress={() => setNewSubscriberRole('Contractor')}>
                   <Text style={[styles.roleText, newSubscriberRole === 'Contractor' && { color: colors.primary }]}>
-                    Contratante
+                    {global.t?.t('contract', 'label', 'contractor')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.roleBtn, newSubscriberRole === 'Witness' && styles.roleBtnActive]}
                   onPress={() => setNewSubscriberRole('Witness')}>
                   <Text style={[styles.roleText, newSubscriberRole === 'Witness' && { color: colors.primary }]}>
-                    Testemunha
+                    {global.t?.t('contract', 'label', 'witness')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -234,7 +239,7 @@ const AssinantesTab = ({
               style={[styles.addButton, !selectedPerson && styles.addButtonDisabled]}
               disabled={!selectedPerson}
               onPress={handleAddSubscriber}>
-              <Text style={styles.addButtonText}>Adicionar</Text>
+              <Text style={styles.addButtonText}>{global.t?.t('contract', 'label', 'addSignatory')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -412,7 +417,7 @@ const ContractDetails = () => {
             },
           ]}>
           <Text style={[styles.statusText, { color: contract.status?.color || '#334155' }]}>
-            {contract.status?.status?.toUpperCase() || '—'}
+            {global.t?.t('contract', 'title', contract.status?.status).toUpperCase() || '—'}
           </Text>
         </View>
 
@@ -436,12 +441,16 @@ const ContractDetails = () => {
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 0 && styles.tabActive]}
           onPress={() => handleTabPress(0)}>
-          <Text style={[styles.tabLabel, activeTab === 0 && styles.tabLabelActive]}>Minuta</Text>
+          <Text style={[styles.tabLabel, activeTab === 0 && styles.tabLabelActive]}>
+            {contract?.status?.realStatus === 'closed'
+              ? global.t?.t('contract', 'label', 'contract')
+              : global.t?.t('contract', 'label', 'draft')}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 1 && styles.tabActive]}
           onPress={() => handleTabPress(1)}>
-          <Text style={[styles.tabLabel, activeTab === 1 && styles.tabLabelActive]}>Assinantes</Text>
+          <Text style={[styles.tabLabel, activeTab === 1 && styles.tabLabelActive]}>{global.t?.t('contract', 'label', 'signatories')}</Text>
         </TouchableOpacity>
       </View>
 
