@@ -359,7 +359,7 @@ const ContractsPage = () => {
               { backgroundColor: getStatusColor(contract.status.status) },
             ]}>
             <Text style={contractStyles.statusText}>
-              {contract.status.status}
+              {global.t?.t('contract', 'title', contract.status.status).toUpperCase()}
             </Text>
           </View>
         </View>
