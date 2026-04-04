@@ -21,7 +21,7 @@ items:[],
         sortable: true,
         name: "id",
         align: "left",
-        label: "id",
+        label: global.t?.t('contract', 'label', 'id'),
         externalFilter: false,
         to: function (value, column, row) {
           return {
@@ -38,7 +38,7 @@ items:[],
         sortable: true,
         name: "people",
         align: "left",
-        label: "people",
+        label: global.t?.t('contract', 'label', 'people'),
         list: "people/getItems",
         externalFilter: false,
         format: function (value) {
@@ -53,14 +53,12 @@ items:[],
         sortable: true,
         name: "peopleType",
         align: "left",
-        label: "peopleType",
+        label: global.t?.t('contract', 'label', 'role'),
         externalFilter: false,
-
-        // @todo traduzir o label?
         list: [
-          { value: "Provider", label: "Provider" },
-          { value: "Contractor", label: "Contractor" },
-          { value: "Witness", label: "Witness" },
+          { value: "Provider", label: global.t?.t('contract', 'label', 'provider') },
+          { value: "Contractor", label: global.t?.t('contract', 'label', 'contractor') },
+          { value: "Witness", label: global.t?.t('contract', 'label', 'witness') },
         ],
         format: function (value) {
           return value;

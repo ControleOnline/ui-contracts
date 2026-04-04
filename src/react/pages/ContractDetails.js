@@ -190,7 +190,7 @@ const AssinantesTab = ({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.subscriberName}>{sub.people?.name || global.t?.t('contract', 'label', 'nameNotAvailable')}</Text>
-                <Text style={styles.subscriberRole}>{sub.peopleType}</Text>
+                <Text style={styles.subscriberRole}>{global.t?.t('contract', 'label', sub.peopleType)}</Text>
               </View>
               {canEdit && (
                 <TouchableOpacity onPress={() => handleRemoveSubscriber(sub.id)}>
