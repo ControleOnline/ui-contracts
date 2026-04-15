@@ -17,6 +17,7 @@ import RenderHTML from 'react-native-render-html';
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import { colors } from '@controleonline/../../src/styles/colors';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
+import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
 
 const { width, height } = Dimensions.get('window');
 
@@ -450,7 +451,12 @@ const ContractDetails = () => {
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 1 && styles.tabActive]}
           onPress={() => handleTabPress(1)}>
-          <Text style={[styles.tabLabel, activeTab === 1 && styles.tabLabelActive]}>{global.t?.t('contract', 'label', 'signatories')}</Text>
+          <Text style={[styles.tabLabel, activeTab === 1 && styles.tabLabelActive]}>Produtos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabItem, activeTab === 2 && styles.tabActive]}
+          onPress={() => handleTabPress(2)}>
+          <Text style={[styles.tabLabel, activeTab === 2 && styles.tabLabelActive]}>{global.t?.t('contract', 'label', 'signatories')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -471,6 +477,16 @@ const ContractDetails = () => {
             fileError={fileError}
             canEdit={canEdit}
             handleSignContract={handleSignContract}
+          />
+        </View>
+
+        <View style={{ width, flex: 1 }}>
+          <LinkedOrderProductsTab
+            contract={contract}
+            canEdit={canEdit}
+            emptyTitle="Nenhum produto vinculado a este contrato."
+            emptySubtitle="Quando houver uma proposta anterior com produtos, eles serao copiados automaticamente para ca."
+            searchPlaceholder="Buscar produto para adicionar ao contrato..."
           />
         </View>
 

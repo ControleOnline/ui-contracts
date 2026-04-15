@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TextInput,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useStore } from '@store';
@@ -15,6 +16,7 @@ import { colors } from '@controleonline/../../src/styles/colors';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import IconAdd from 'react-native-vector-icons/MaterialIcons';
 import CreateContractModal from '../components/CreateContractModal';
+import { getPeopleDisplayName } from '@controleonline/ui-common/src/react/utils/peopleDisplay';
 
 const ContractsPage = () => {
   const peopleStore = useStore('people');
@@ -32,6 +34,7 @@ const ContractsPage = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [refreshing, setRefreshing] = useState(false);
   const [allContracts, setAllContracts] = useState([]);
+  const [selectedStatusFilterKey, setSelectedStatusFilterKey] = useState('');
   const [peopleNameById, setPeopleNameById] = useState({});
   const [peopleTypeById, setPeopleTypeById] = useState({});
   const normalizeDigits = value => String(value || '').replace(/\D/g, '');
@@ -54,9 +57,7 @@ const ContractsPage = () => {
       return '';
     }
 
-    return normalizeText(
-      person?.name || person?.alias || person?.nickname || person?.realname,
-    );
+    return normalizeText(getPeopleDisplayName(person));
   };
 
   const getResolvedPeopleName = person => {
@@ -79,6 +80,13 @@ const ContractsPage = () => {
       ? String(peopleTypeById[personId] || '').trim().toUpperCase()
       : '';
   };
+
+  const normalizeStatusKey = value =>
+    String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ');
 
   const isLegalEntity = person => getResolvedPeopleType(person) === 'J';
 
@@ -182,7 +190,7 @@ const ContractsPage = () => {
   };
 
   const fetchContracts = useCallback(
-    (query, page) => {
+    (query, page, statusFilterParam) => {
       if (!currentCompany?.id) {
         return;
       }
@@ -198,9 +206,18 @@ const ContractsPage = () => {
         params['peoples.people.name'] = String(query ?? searchQuery).trim();
       }
 
+      const selectedFilter = statusFilterParam ?? selectedStatusFilterKey;
+      if (selectedFilter) {
+        if (selectedFilter.startsWith('/statuses/')) {
+          params.status = selectedFilter;
+        } else if (selectedFilter.startsWith('realStatus:')) {
+          params['status.realStatus'] = selectedFilter.replace('realStatus:', '');
+        }
+      }
+
       contractActions.getItems(params);
     },
-    [currentCompany?.id, currentPage, itemsPerPage, searchQuery],
+    [currentCompany?.id, currentPage, itemsPerPage, searchQuery, selectedStatusFilterKey],
   );
 
   useLayoutEffect(() => {
@@ -316,7 +333,7 @@ const ContractsPage = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, itemsPerPage]);
+  }, [searchQuery, itemsPerPage, selectedStatusFilterKey]);
 
   const handleCreateSuccess = () => {
     fetchContracts(searchQuery, 1);
@@ -331,20 +348,97 @@ const ContractsPage = () => {
   }, [fetchContracts, searchQuery]);
 
   const getStatusColor = status => {
-    switch (status?.toLowerCase()) {
+    switch (normalizeStatusKey(status)) {
+      case 'open':
+      case 'aberto':
+        return '#3B82F6';
       case 'ativo':
+      case 'active':
+      case 'assinado':
+      case 'signed':
         return '#4CAF50';
       case 'inativo':
+      case 'inactive':
+      case 'cancelado':
+      case 'canceled':
         return '#F44336';
       case 'pendente':
+      case 'pending':
         return '#FF9800';
+      case 'closed':
+      case 'fechado':
+        return '#64748B';
       default:
         return '#757575';
     }
   };
 
+  const getStatusLabel = status => {
+    const normalized = normalizeStatusKey(status);
+    const map = {
+      open: global.t?.t('contract','status', 'open'),
+      aberto: global.t?.t('contract','status', 'open'),
+      pending: global.t?.t('contract','status', 'pending'),
+      pendente: global.t?.t('contract','status', 'pending'),
+      closed: global.t?.t('contract','status', 'closed'),
+      fechado: global.t?.t('contract','status', 'closed'),
+      active: global.t?.t('contract','status', 'active'),
+      ativo: global.t?.t('contract','status', 'active'),
+      inactive: global.t?.t('contract','status', 'inactive'),
+      inativo: global.t?.t('contract','status', 'inactive'),
+    };
+
+    return map[normalized] || status || global.t?.t('contract','label', 'na');
+  };
+
+  const statusFilterOptions = React.useMemo(
+    () => [
+      {
+        key: 'realStatus:open',
+        label: global.t?.t('contract','status', 'open') || 'Em aberto',
+        color: getStatusColor('open'),
+        normalizedStatus: 'open',
+      },
+      {
+        key: 'realStatus:pending',
+        label: global.t?.t('contract','status', 'pending') || 'Pendente',
+        color: getStatusColor('pending'),
+        normalizedStatus: 'pending',
+      },
+      {
+        key: 'realStatus:closed',
+        label: global.t?.t('contract','status', 'closed') || 'Fechado',
+        color: getStatusColor('closed'),
+        normalizedStatus: 'closed',
+      },
+    ],
+    [],
+  );
+
+  const contractMatchesStatusFilter = useCallback(
+    (contract, filterKey) => {
+      if (!filterKey) {
+        return true;
+      }
+
+      const normalizedStatus = normalizeStatusKey(
+        contract?.status?.realStatus || contract?.status?.status,
+      );
+      const normalizedFilter = normalizeStatusKey(
+        String(filterKey || '').replace('realStatus:', ''),
+      );
+
+      return normalizedStatus === normalizedFilter;
+    },
+    [],
+  );
+
   // Usa apenas os contratos que vêm da API (já filtrados e paginados)
-  const safeContracts = allContracts;
+  const safeContracts = selectedStatusFilterKey
+    ? allContracts.filter(contract =>
+        contractMatchesStatusFilter(contract, selectedStatusFilterKey),
+      )
+    : allContracts;
 
   const renderContract = contract => (
     <View key={contract.id} style={contractStyles.contractCard}>
@@ -359,7 +453,7 @@ const ContractsPage = () => {
               { backgroundColor: getStatusColor(contract.status.status) },
             ]}>
             <Text style={contractStyles.statusText}>
-              {global.t?.t('contract', 'title', contract.status.status).toUpperCase()}
+              {getStatusLabel(contract.status?.realStatus || contract.status?.status).toUpperCase()}
             </Text>
           </View>
         </View>
@@ -440,6 +534,55 @@ const ContractsPage = () => {
             <IconAdd name="add" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
+
+        <View style={contractStyles.statusFilterSection}>
+          <Text style={contractStyles.statusFilterLabel}>{global.t?.t('contract','label', 'status')}</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={contractStyles.statusFilterRow}>
+            <TouchableOpacity
+              onPress={() => setSelectedStatusFilterKey('')}
+              style={[
+                contractStyles.statusFilterChip,
+                !selectedStatusFilterKey && contractStyles.statusFilterChipActive,
+              ]}>
+              <Text
+                style={[
+                  contractStyles.statusFilterChipText,
+                  !selectedStatusFilterKey && contractStyles.statusFilterChipTextActive,
+                ]}>
+                {global.t?.t('contract','filter', 'all')}
+              </Text>
+            </TouchableOpacity>
+
+            {statusFilterOptions.map(item => {
+              const isActive = selectedStatusFilterKey === item.key;
+
+              return (
+                <TouchableOpacity
+                  key={item.key}
+                  onPress={() => setSelectedStatusFilterKey(item.key)}
+                  style={[
+                    contractStyles.statusFilterChip,
+                    isActive && contractStyles.statusFilterChipActive,
+                    {
+                      borderColor: isActive ? item.color : '#DCE3EC',
+                      backgroundColor: isActive ? `${item.color}24` : '#F8FAFC',
+                    },
+                  ]}>
+                  <Text
+                    style={[
+                      contractStyles.statusFilterChipText,
+                      { color: isActive ? item.color : '#64748B' },
+                    ]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
       </View>
 
       <FlatList
@@ -472,9 +615,15 @@ const ContractsPage = () => {
           return (
             <View style={contractStyles.emptyContainer}>
               <Icon name="file-text-o" size={64} color="#bdc3c7" style={{ marginBottom: 14 }} />
-              <Text style={contractStyles.emptyTitle}>Nenhum contrato encontrado</Text>
+              <Text style={contractStyles.emptyTitle}>
+                {selectedStatusFilterKey ? 'Nenhum contrato neste status' : 'Nenhum contrato encontrado'}
+              </Text>
               <Text style={contractStyles.emptySubtitle}>
-                {searchQuery ? 'Tente outros termos de busca' : 'Os contratos aparecerão aqui quando disponíveis'}
+                {searchQuery
+                  ? 'Tente outros termos de busca'
+                  : selectedStatusFilterKey
+                  ? 'Ajuste o filtro para visualizar outros contratos'
+                  : 'Os contratos aparecerao aqui quando disponiveis'}
               </Text>
             </View>
           );
@@ -522,6 +671,39 @@ const contractStyles = StyleSheet.create({
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  statusFilterSection: {
+    marginTop: 10,
+  },
+  statusFilterLabel: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  statusFilterRow: {
+    paddingRight: 4,
+  },
+  statusFilterChip: {
+    borderWidth: 1,
+    borderColor: '#DCE3EC',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginRight: 8,
+  },
+  statusFilterChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: '#E7F3FF',
+  },
+  statusFilterChipText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  statusFilterChipTextActive: {
+    color: colors.primary,
   },
   searchInputContainer: {
     flex: 1,
