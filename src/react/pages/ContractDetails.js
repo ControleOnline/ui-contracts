@@ -1,14 +1,5 @@
 import React, { useEffect, useState, useLayoutEffect, useRef } from 'react';
-import {
-  Text,
-  View,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Dimensions,
-  ActivityIndicator,
-  Platform,
-} from 'react-native';
+import { Text, View, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStores } from '@store';
@@ -18,7 +9,27 @@ import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedM
 import { colors } from '@controleonline/../../src/styles/colors';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
+import styles from './ContractDetails.styles';
 
+import {
+  inlineStyle_61_12,
+  inlineStyle_63_14,
+  inlineStyle_72_12,
+  inlineStyle_74_14,
+  inlineStyle_82_10,
+  inlineStyle_86_8,
+  inlineStyle_101_10,
+  inlineStyle_184_20,
+  inlineStyle_202_75,
+  inlineStyle_203_20,
+  inlineStyle_211_18,
+  inlineStyle_395_14,
+  inlineStyle_464_14,
+  inlineStyle_475_14,
+  inlineStyle_485_14,
+} from './ContractDetails.styles';
+
+import { inlineStyle_128_8, inlineStyle_149_18, inlineStyle_192_41 } from './ContractDetails.styles';
 const { width, height } = Dimensions.get('window');
 
 const PdfViewerFromContent = ({ content }) => {
@@ -66,9 +77,11 @@ const PdfViewerFromContent = ({ content }) => {
 
   if (error) {
     return (
-      <View style={{ alignItems: 'center', justifyContent: 'center', height: height * 0.75, padding: 30 }}>
+      <View style={inlineStyle_61_12({
+        height: height,
+      })}>
         <Icon name="error-outline" size={64} color="red" />
-        <Text style={{ color: 'red', fontSize: 16, textAlign: 'center', marginTop: 16, lineHeight: 24 }}>
+        <Text style={inlineStyle_63_14}>
           {error}
         </Text>
       </View>
@@ -77,9 +90,11 @@ const PdfViewerFromContent = ({ content }) => {
 
   if (!pdfUrl) {
     return (
-      <View style={{ alignItems: 'center', justifyContent: 'center', height: height * 0.75 }}>
+      <View style={inlineStyle_72_12({
+        height: height,
+      })}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 16, color: '#64748b', fontSize: 15 }}>
+        <Text style={inlineStyle_74_14}>
           Preparando visualização do PDF...
         </Text>
       </View>
@@ -87,11 +102,13 @@ const PdfViewerFromContent = ({ content }) => {
   }
 
   return (
-    <View style={{ height: height * 0.75, width: '100%' }}>
+    <View style={inlineStyle_82_10({
+      height: height,
+    })}>
       <iframe
         title="pdf-viewer"
         src={pdfUrl}
-        style={{ width: '100%', height: '100%', border: 'none' }}
+        style={inlineStyle_86_8}
       />
     </View>
   );
@@ -106,13 +123,12 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
   const loadingDocumentLabel = contractDocumentLabel || 'documento';
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={inlineStyle_101_10}>
       <ScrollView
         style={styles.tabScroll}
-        contentContainerStyle={{
-          padding: 16,
-          paddingBottom: canEdit ? 120 : 40,
-        }}>
+        contentContainerStyle={inlineStyle_128_8({
+          canEdit: canEdit,
+        })}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{contractDocumentLabel}</Text>
 
@@ -130,7 +146,7 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
                   contentWidth={width - 32}
                   source={{ html: fileContent }}
                   ignoredDomTags={['meta', 'title']}
-                  baseStyle={{ color: '#334155', lineHeight: 24 }}
+                  baseStyle={inlineStyle_149_18}
                 />
               ) : Platform.OS === 'web' ? (
                 <PdfViewerFromContent content={fileContent} />
@@ -149,7 +165,6 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
           )}
         </View>
       </ScrollView>
-
       {canEdit && (
         <View style={styles.fixedSignButtonContainer}>
           <TouchableOpacity style={styles.signButton} onPress={handleSignContract}>
@@ -174,7 +189,7 @@ const AssinantesTab = ({
   setNewSubscriberRole,
 }) => {
   return (
-    <ScrollView style={styles.tabScroll} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+    <ScrollView style={styles.tabScroll} contentContainerStyle={inlineStyle_192_41}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{global.t?.t('contract', 'label', 'signatories')}</Text>
 
@@ -189,7 +204,7 @@ const AssinantesTab = ({
               <View style={styles.subscriberAvatar}>
                 <Icon name="person" size={24} color="#fff" />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={inlineStyle_184_20}>
                 <Text style={styles.subscriberName}>{sub.people?.name || global.t?.t('contract', 'label', 'nameNotAvailable')}</Text>
                 <Text style={styles.subscriberRole}>{sub.peopleType}</Text>
               </View>
@@ -207,8 +222,10 @@ const AssinantesTab = ({
             <Text style={styles.addTitle}>{global.t?.t('contract', 'label', 'addSignatory')}</Text>
 
             <TouchableOpacity style={styles.selectField} onPress={() => setPeoplePickerVisible(true)}>
-              <Icon name="person-outline" size={20} color={colors.primary} style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, color: selectedPerson ? '#0f172a' : '#94a3b8' }}>
+              <Icon name="person-outline" size={20} color={colors.primary} style={inlineStyle_202_75} />
+              <Text style={inlineStyle_203_20({
+                selectedPerson: selectedPerson,
+              })}>
                 {selectedPerson
                   ? people?.find((p) => p['@id'] === selectedPerson)?.name || global.t?.t('contract', 'label', 'selected')
                   : global.t?.t('contract', 'label', 'selectPerson')}
@@ -216,7 +233,7 @@ const AssinantesTab = ({
               <Icon name="arrow-drop-down" size={24} color="#64748b" />
             </TouchableOpacity>
 
-            <View style={{ marginVertical: 12 }}>
+            <View style={inlineStyle_211_18}>
               <Text style={styles.label}>{global.t?.t('contract', 'label', 'role')}</Text>
               <View style={styles.roleRow}>
                 <TouchableOpacity
@@ -400,14 +417,13 @@ const ContractDetails = () => {
         <View style={styles.topAvatar}>
           <Icon name="description" size={32} color="#fff" />
         </View>
-        <View style={{ flex: 1 }}>
+        <View style={inlineStyle_395_14}>
           <Text style={styles.topTitle} numberOfLines={1}>
             {contract.contractModel?.model || 'Contrato sem modelo'}
           </Text>
           <Text style={styles.topSubtitle}>ID: {contract.id}</Text>
         </View>
       </View>
-
       <View style={styles.fixedInfo}>
         <View
           style={[
@@ -437,7 +453,6 @@ const ContractDetails = () => {
           </View>
         </View>
       </View>
-
       <View style={styles.tabs}>
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 0 && styles.tabActive]}
@@ -459,7 +474,6 @@ const ContractDetails = () => {
           <Text style={[styles.tabLabel, activeTab === 2 && styles.tabLabelActive]}>{global.t?.t('contract', 'label', 'signatories')}</Text>
         </TouchableOpacity>
       </View>
-
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -469,7 +483,9 @@ const ContractDetails = () => {
           const idx = Math.round(e.nativeEvent.contentOffset.x / width);
           if (idx !== activeTab) setActiveTab(idx);
         }}>
-        <View style={{ width, flex: 1 }}>
+        <View style={inlineStyle_464_14({
+          width: width,
+        })}>
           <MinutaTab
             contract={contract}
             fileContent={fileContent}
@@ -480,7 +496,9 @@ const ContractDetails = () => {
           />
         </View>
 
-        <View style={{ width, flex: 1 }}>
+        <View style={inlineStyle_475_14({
+          width: width,
+        })}>
           <LinkedOrderProductsTab
             contract={contract}
             canEdit={canEdit}
@@ -490,7 +508,9 @@ const ContractDetails = () => {
           />
         </View>
 
-        <View style={{ width, flex: 1 }}>
+        <View style={inlineStyle_485_14({
+          width: width,
+        })}>
           <AssinantesTab
             subscribers={subscribers}
             canEdit={canEdit}
@@ -504,7 +524,6 @@ const ContractDetails = () => {
           />
         </View>
       </ScrollView>
-
       <AnimatedModal visible={peoplePickerVisible} onRequestClose={() => setPeoplePickerVisible(false)}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
@@ -534,218 +553,5 @@ const ContractDetails = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-
-  topHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    paddingTop: Platform.OS === 'ios' ? 50 : 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  topAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  topTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#0f172a',
-  },
-  topSubtitle: {
-    fontSize: 14,
-    color: '#64748b',
-    marginTop: 4,
-  },
-
-  fixedInfo: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  statusBox: {
-    alignSelf: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 30,
-    borderWidth: 1.5,
-    marginBottom: 16,
-  },
-  statusText: {
-    fontSize: 17,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  datesRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  dateBlock: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 10,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 10,
-    marginHorizontal: 6,
-  },
-  dateLabel: { fontSize: 12, color: '#64748b', marginBottom: 4 },
-  dateValue: { fontSize: 16, fontWeight: '700', color: '#0f172a' },
-
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  tabItem: { flex: 1, paddingVertical: 16, alignItems: 'center' },
-  tabActive: { borderBottomWidth: 3, borderBottomColor: colors.primary },
-  tabLabel: { fontSize: 15, fontWeight: '600', color: '#64748b' },
-  tabLabelActive: { color: colors.primary, fontWeight: '700' },
-
-  tabScroll: { flex: 1 },
-  section: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    elevation: 1,
-  },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#0f172a', marginBottom: 16 },
-
-  centerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60
-  },
-  loadingText: {
-    marginTop: 16,
-    color: '#64748b',
-    fontSize: 15
-  },
-  emptyText: {
-    marginTop: 16,
-    color: '#94a3b8',
-    fontSize: 15
-  },
-  errorText: {
-    color: colors.error,
-    textAlign: 'center',
-    padding: 24
-  },
-
-  htmlWrapper: { backgroundColor: '#fff' },
-
-  fixedSignButtonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-  },
-  signButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  signButtonText: { color: '#fff', fontSize: 16, fontWeight: '700', marginLeft: 12 },
-
-  subscriberCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  subscriberAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  subscriberName: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
-  subscriberRole: { fontSize: 13, color: '#64748b' },
-
-  addForm: {
-    marginTop: 24,
-    backgroundColor: '#f8fafc',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  addTitle: { fontSize: 16, fontWeight: '700', marginBottom: 16 },
-  selectField: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 16,
-  },
-  label: { fontSize: 14, color: '#64748b', marginBottom: 8, fontWeight: '500' },
-  roleRow: { flexDirection: 'row', gap: 12 },
-  roleBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: '#f1f5f9',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  roleBtnActive: { backgroundColor: '#e0f2fe', borderColor: colors.primary },
-  roleText: { fontWeight: '600', color: '#64748b' },
-  addButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  addButtonDisabled: { backgroundColor: '#cbd5e1' },
-  addButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-
-  modalContent: { padding: 20, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 19, fontWeight: '700' },
-  personRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  personRowSelected: { backgroundColor: '#f0f9ff' },
-  personName: { fontSize: 16, color: '#0f172a', flex: 1 },
-
-  topSkeleton: { height: 100, backgroundColor: '#e2e8f0', margin: 16, borderRadius: 12 },
-  infoSkeleton: { height: 140, backgroundColor: '#e2e8f0', marginHorizontal: 16, marginBottom: 8, borderRadius: 12 },
-  tabsSkeleton: { height: 56, backgroundColor: '#e2e8f0', marginHorizontal: 16, borderRadius: 12 },
-});
 
 export default ContractDetails;
