@@ -199,10 +199,10 @@ const Contracts = ({client}) => {
         <View style={contractStyles.centerContent}>
           <Icon name="description" size={48} color="#CCCCCC" />
           <Text style={contractStyles.emptyTitle}>
-            {global.t?.t('contract', 'label', 'noContractsFound')}
+            Nenhum contrato cadastrado
           </Text>
           <Text style={contractStyles.emptySubtitle}>
-            {global.t?.t('contract', 'label', 'contractsWillAppearHere')}
+            Os contratos cadastrados para este cliente aparecerao aqui quando disponiveis
           </Text>
         </View>
       ) : (
