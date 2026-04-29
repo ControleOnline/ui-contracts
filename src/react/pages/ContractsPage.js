@@ -8,6 +8,7 @@ import IconAdd from 'react-native-vector-icons/MaterialIcons';
 import CreateContractModal from '../components/CreateContractModal';
 import { getPeopleDisplayName } from '@controleonline/ui-common/src/react/utils/peopleDisplay';
 import contractStyles from './ContractsPage.styles';
+const {resolveContractsListEmptyState} = require('../utils/contractEmptyState');
 
 import {
   inlineStyle_587_20,
@@ -200,8 +201,9 @@ const ContractsPage = () => {
         itemsPerPage,
       };
 
-      if (String(query ?? searchQuery).trim()) {
-        params['peoples.people.name'] = String(query ?? searchQuery).trim();
+      const normalizedQuery = String(query ?? searchQuery).trim();
+      if (normalizedQuery) {
+        params['peoples.people.name'] = normalizedQuery;
       }
 
       const selectedFilter = statusFilterParam ?? selectedStatusFilterKey;
@@ -437,6 +439,11 @@ const ContractsPage = () => {
         contractMatchesStatusFilter(contract, selectedStatusFilterKey),
       )
     : allContracts;
+  const emptyState = resolveContractsListEmptyState({
+    hasSearchQuery: Boolean(String(searchQuery || '').trim()),
+    hasStatusFilter: Boolean(selectedStatusFilterKey),
+    translate: global.t?.t,
+  });
 
   const renderContract = contract => (
     <View key={contract.id} style={contractStyles.contractCard}>
@@ -613,14 +620,10 @@ const ContractsPage = () => {
             <View style={contractStyles.emptyContainer}>
               <Icon name="file-text-o" size={64} color="#bdc3c7" style={inlineStyle_608_65} />
               <Text style={contractStyles.emptyTitle}>
-                {selectedStatusFilterKey ? 'Nenhum contrato neste status' : 'Nenhum contrato encontrado'}
+                {emptyState.title}
               </Text>
               <Text style={contractStyles.emptySubtitle}>
-                {searchQuery
-                  ? 'Tente outros termos de busca'
-                  : selectedStatusFilterKey
-                  ? 'Ajuste o filtro para visualizar outros contratos'
-                  : 'Os contratos aparecerao aqui quando disponiveis'}
+                {emptyState.subtitle}
               </Text>
             </View>
           );

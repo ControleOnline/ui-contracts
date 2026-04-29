@@ -14,7 +14,9 @@
     "dev:electron": "cd dev && yarn 'dev:electron' && cd ..",
     "build": "node build/index.js",
     "build:js": "node build/script.javascript.js",
-    "build:css": "node build/script.css.js"
+    "build:css": "node build/script.css.js",
+    "test": "npm run test:contract-empty-state",
+    "test:contract-empty-state": "node --test src/tests/react/utils/contractEmptyState.test.js"
   },
   "repository": {
     "type": "git",
