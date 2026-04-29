@@ -13,6 +13,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eff6ff',
+    marginRight: 12,
+  },
   topAvatar: {
     width: 60,
     height: 60,
@@ -340,5 +349,3 @@ export const inlineStyle_192_41 = {
   padding: 16,
   paddingBottom: 100,
 };
-
-

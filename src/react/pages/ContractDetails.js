@@ -9,6 +9,7 @@ import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedM
 import { colors } from '@controleonline/../../src/styles/colors';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
+const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
 import styles from './ContractDetails.styles';
 
 import {
@@ -295,6 +296,16 @@ const ContractDetails = () => {
   const scrollRef = useRef(null);
 
   const canEdit = contract?.status?.realStatus === 'open';
+  const handleBackPress = () => {
+    const backAction = resolveContractDetailsBackAction(navigation);
+
+    if (backAction.type === 'history') {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate(backAction.routeName);
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -414,6 +425,9 @@ const ContractDetails = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topHeader}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <Icon name="arrow-back" size={24} color={colors.primary} />
+        </TouchableOpacity>
         <View style={styles.topAvatar}>
           <Icon name="description" size={32} color="#fff" />
         </View>
