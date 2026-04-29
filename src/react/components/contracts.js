@@ -5,6 +5,7 @@ import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {useStores} from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import contractStyles from './contracts.styles';
+const {resolveClientContractsEmptyState} = require('../utils/contractEmptyState');
 
 const Contracts = ({client}) => {
   const peopleStore = useStores(state => state.people);
@@ -15,6 +16,7 @@ const Contracts = ({client}) => {
   const contractActions = contractStore.actions;
   const {items: contracts, isLoading, error} = contractGetters;
   const navigation = useNavigation();
+  const emptyState = resolveClientContractsEmptyState(global.t?.t);
   const clientId = String(
     client?.id || client?.['@id']?.toString().replace(/\D/g, '') || '',
   );
@@ -199,10 +201,10 @@ const Contracts = ({client}) => {
         <View style={contractStyles.centerContent}>
           <Icon name="description" size={48} color="#CCCCCC" />
           <Text style={contractStyles.emptyTitle}>
-            Nenhum contrato cadastrado
+            {emptyState.title}
           </Text>
           <Text style={contractStyles.emptySubtitle}>
-            Os contratos cadastrados para este cliente aparecerao aqui quando disponiveis
+            {emptyState.subtitle}
           </Text>
         </View>
       ) : (
