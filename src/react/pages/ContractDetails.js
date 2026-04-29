@@ -9,6 +9,7 @@ import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedM
 import { colors } from '@controleonline/../../src/styles/colors';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
+const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
 import styles from './ContractDetails.styles';
 
 import {
@@ -296,12 +297,14 @@ const ContractDetails = () => {
 
   const canEdit = contract?.status?.realStatus === 'open';
   const handleBackPress = () => {
-    if (navigation.canGoBack()) {
+    const backAction = resolveContractDetailsBackAction(navigation);
+
+    if (backAction.type === 'history') {
       navigation.goBack();
       return;
     }
 
-    navigation.navigate('ContractsIndex');
+    navigation.navigate(backAction.routeName);
   };
 
   useLayoutEffect(() => {
