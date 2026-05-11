@@ -6,6 +6,10 @@ import {useStores} from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import contractStyles from './contracts.styles';
 const {resolveClientContractsEmptyState} = require('../utils/contractEmptyState');
+const {
+  buildClientContractsParams,
+  filterContractsByClient,
+} = require('../utils/contractClientMatch');
 
 const Contracts = ({client}) => {
   const peopleStore = useStores(state => state.people);
@@ -22,66 +26,11 @@ const Contracts = ({client}) => {
   );
   const clientIri = client?.['@id'] || (clientId ? `/people/${clientId}` : '');
 
-  const normalizeDigits = value => String(value || '').replace(/\D/g, '');
-
-  const getEntryIdentifiers = entry => {
-    const identifiers = [];
-    const people = entry?.people;
-
-    if (typeof people === 'string') {
-      identifiers.push(people);
-      const digits = normalizeDigits(people);
-      if (digits) {
-        identifiers.push(digits);
-      }
-    } else if (people && typeof people === 'object') {
-      if (people['@id']) {
-        identifiers.push(people['@id']);
-      }
-      if (people.id != null) {
-        identifiers.push(String(people.id));
-      }
-    }
-
-    if (entry?.peopleId != null) {
-      identifiers.push(String(entry.peopleId));
-    }
-
-    return identifiers;
-  };
-
   const safeContracts = Array.isArray(contracts) ? contracts : [];
-  const contractsByClient = useMemo(() => {
-    if (!clientId) {
-      return safeContracts;
-    }
-
-    const hasInspectablePeople = safeContracts.some(contract =>
-      Array.isArray(contract?.peoples)
-        ? contract.peoples.some(entry => getEntryIdentifiers(entry).length > 0)
-        : false,
-    );
-
-    if (!hasInspectablePeople) {
-      return safeContracts;
-    }
-
-    return safeContracts.filter(contract =>
-      Array.isArray(contract?.peoples)
-        ? contract.peoples.some(entry =>
-            getEntryIdentifiers(entry).some(identifier => {
-              if (!identifier) {
-                return false;
-              }
-              return (
-                identifier === clientIri ||
-                normalizeDigits(identifier) === clientId
-              );
-            }),
-          )
-        : false,
-    );
-  }, [safeContracts, clientId, clientIri]);
+  const contractsByClient = useMemo(
+    () => filterContractsByClient(safeContracts, {clientId, clientIri}),
+    [safeContracts, clientId, clientIri],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -89,12 +38,13 @@ const Contracts = ({client}) => {
         return;
       }
 
-      contractActions.getItems({
-        provider: currentCompany.id,
-        'contractModel.context': 'contract',
-        'peoples.people': clientIri,
-        'peoples.people.id': clientId,
-      });
+      contractActions.getItems(
+        buildClientContractsParams({
+          currentCompanyId: currentCompany.id,
+          clientId,
+          clientIri,
+        }),
+      );
     }, [currentCompany?.id, clientId, clientIri]),
   );
 
