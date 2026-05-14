@@ -27,3 +27,13 @@ test('falls back to ContractsIndex when there is no back stack', () => {
     },
   )
 })
+
+test('falls back to ContractsIndex when navigation does not expose canGoBack', () => {
+  assert.deepEqual(
+    resolveContractDetailsBackAction({}),
+    {
+      type: 'route',
+      routeName: 'ContractsIndex',
+    },
+  )
+})
