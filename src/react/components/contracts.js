@@ -11,7 +11,7 @@ const {
   filterContractsByClient,
 } = require('../utils/contractClientMatch');
 
-const Contracts = ({client}) => {
+const Contracts = ({client, parentCompanyIri = ''}) => {
   const peopleStore = useStores(state => state.people);
   const peopleGetters = peopleStore.getters;
   const {currentCompany} = peopleGetters;
@@ -28,8 +28,13 @@ const Contracts = ({client}) => {
 
   const safeContracts = Array.isArray(contracts) ? contracts : [];
   const contractsByClient = useMemo(
-    () => filterContractsByClient(safeContracts, {clientId, clientIri}),
-    [safeContracts, clientId, clientIri],
+    () =>
+      filterContractsByClient(safeContracts, {
+        clientId,
+        clientIri,
+        parentCompanyIri,
+      }),
+    [safeContracts, clientId, clientIri, parentCompanyIri],
   );
 
   useFocusEffect(
@@ -43,9 +48,10 @@ const Contracts = ({client}) => {
           currentCompanyId: currentCompany.id,
           clientId,
           clientIri,
+          parentCompanyIri,
         }),
       );
-    }, [currentCompany?.id, clientId, clientIri]),
+    }, [currentCompany?.id, clientId, clientIri, parentCompanyIri, contractActions]),
   );
 
   const getStatusColor = status => {

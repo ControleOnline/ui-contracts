@@ -10,8 +10,6 @@
  */
 
 const emptyPromise = function(config) {
-  console.log('Executing:', config.operation, config.resourceId);
-
   return new Promise(
    function(resolve, reject) {
      window.setTimeout(

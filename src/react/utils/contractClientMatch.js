@@ -6,6 +6,38 @@ function buildPeopleIri(clientId) {
   return clientId ? `/people/${clientId}` : ''
 }
 
+function resolveContractsScope({
+  clientId = '',
+  clientIri = '',
+  parentCompanyId = '',
+  parentCompanyIri = '',
+} = {}) {
+  const normalizedClientId = normalizeDigits(clientId)
+  const normalizedClientIri = clientIri || buildPeopleIri(normalizedClientId)
+  const normalizedParentCompanyId = normalizeDigits(parentCompanyId || parentCompanyIri)
+  const normalizedParentCompanyIri =
+    parentCompanyIri || buildPeopleIri(normalizedParentCompanyId)
+
+  if (
+    normalizedParentCompanyIri &&
+    normalizedParentCompanyIri !== normalizedClientIri
+  ) {
+    return {
+      contractClientId: '',
+      contractClientIri: '',
+      participantId: normalizedClientId,
+      participantIri: normalizedClientIri,
+    }
+  }
+
+  return {
+    contractClientId: normalizedClientId,
+    contractClientIri: normalizedClientIri,
+    participantId: '',
+    participantIri: '',
+  }
+}
+
 function getEntityIdentifiers(entity) {
   const identifiers = []
 
@@ -88,19 +120,56 @@ function contractMatchesClient(contract, {clientId = '', clientIri = ''} = {}) {
     : false
 }
 
-function filterContractsByClient(contracts, {clientId = '', clientIri = ''} = {}) {
-  const safeContracts = Array.isArray(contracts) ? contracts : []
-
-  if (!clientId) {
-    return safeContracts
+function contractMatchesParticipant(
+  contract,
+  {participantId = '', participantIri = ''} = {},
+) {
+  if (!participantId) {
+    return true
   }
 
-  if (!safeContracts.some(contractHasInspectableClient)) {
+  return Array.isArray(contract?.peoples)
+    ? contract.peoples.some(entry =>
+        getEntryIdentifiers(entry).some(identifier =>
+          matchesClientIdentifier(identifier, participantId, participantIri),
+        ),
+      )
+    : false
+}
+
+function filterContractsByClient(
+  contracts,
+  {
+    clientId = '',
+    clientIri = '',
+    parentCompanyId = '',
+    parentCompanyIri = '',
+  } = {},
+) {
+  const safeContracts = Array.isArray(contracts) ? contracts : []
+  const scope = resolveContractsScope({
+    clientId,
+    clientIri,
+    parentCompanyId,
+    parentCompanyIri,
+  })
+
+  if (!scope.contractClientId && !scope.participantId) {
     return safeContracts
   }
 
   return safeContracts.filter(contract =>
-    contractMatchesClient(contract, {clientId, clientIri}),
+    (!scope.contractClientId ||
+      !contractHasInspectableClient(contract) ||
+      contractMatchesClient(contract, {
+        clientId: scope.contractClientId,
+        clientIri: scope.contractClientIri,
+      })) &&
+    (!scope.participantId ||
+      contractMatchesParticipant(contract, {
+        participantId: scope.participantId,
+        participantIri: scope.participantIri,
+      })),
   )
 }
 
@@ -108,19 +177,35 @@ function buildClientContractsParams({
   currentCompanyId = '',
   clientId = '',
   clientIri = '',
+  parentCompanyId = '',
+  parentCompanyIri = '',
 } = {}) {
-  const normalizedClientId = normalizeDigits(clientId)
-  const normalizedClientIri = clientIri || buildPeopleIri(normalizedClientId)
+  const scope = resolveContractsScope({
+    clientId,
+    clientIri,
+    parentCompanyId,
+    parentCompanyIri,
+  })
 
-  return {
+  const params = {
     provider: currentCompanyId,
-    client: normalizedClientIri,
     'contractModel.context': 'contract',
   }
+
+  if (scope.contractClientIri) {
+    params.client = scope.contractClientIri
+  }
+
+  if (scope.participantIri) {
+    params['peoples.people'] = scope.participantIri
+  }
+
+  return params
 }
 
 module.exports = {
   buildClientContractsParams,
   contractMatchesClient,
+  contractMatchesParticipant,
   filterContractsByClient,
 }
