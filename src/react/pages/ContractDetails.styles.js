@@ -1,5 +1,7 @@
-import { Platform, StyleSheet } from 'react-native';
+import { Dimensions, Platform, StyleSheet } from 'react-native';
 import { colors } from '@controleonline/../../src/styles/colors';
+
+const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
@@ -100,25 +102,36 @@ const styles = StyleSheet.create({
   centerContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60
+    paddingVertical: 60,
   },
   loadingText: {
     marginTop: 16,
     color: '#64748b',
-    fontSize: 15
+    fontSize: 15,
   },
   emptyText: {
     marginTop: 16,
     color: '#94a3b8',
-    fontSize: 15
+    fontSize: 15,
   },
   errorText: {
     color: colors.error,
     textAlign: 'center',
-    padding: 24
+    padding: 24,
   },
 
   htmlWrapper: { backgroundColor: '#fff' },
+  nativePdfContainer: {
+    minHeight: height * 0.75,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#e2e8f0',
+  },
+  nativePdf: {
+    width: '100%',
+    height: height * 0.75,
+    backgroundColor: '#fff',
+  },
 
   fixedSignButtonContainer: {
     position: 'absolute',
@@ -225,11 +238,7 @@ const styles = StyleSheet.create({
 
 export default styles;
 
-export const inlineStyle_61_12 = (
-  {
-    height: height,
-  },
-) => ({
+export const inlineStyle_61_12 = ({ height: _height }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   height: height * 0.75,
@@ -244,11 +253,7 @@ export const inlineStyle_63_14 = {
   lineHeight: 24,
 };
 
-export const inlineStyle_72_12 = (
-  {
-    height: height,
-  },
-) => ({
+export const inlineStyle_72_12 = ({ height: _height }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   height: height * 0.75,
@@ -260,11 +265,7 @@ export const inlineStyle_74_14 = {
   fontSize: 15,
 };
 
-export const inlineStyle_82_10 = (
-  {
-    height: height,
-  },
-) => ({
+export const inlineStyle_82_10 = ({ height: _height }) => ({
   height: height * 0.75,
   width: '100%',
 });
@@ -287,11 +288,7 @@ export const inlineStyle_202_75 = {
   marginRight: 12,
 };
 
-export const inlineStyle_203_20 = (
-  {
-    selectedPerson: selectedPerson,
-  },
-) => ({
+export const inlineStyle_203_20 = ({ selectedPerson }) => ({
   flex: 1,
   color: selectedPerson ? '#0f172a' : '#94a3b8',
 });
@@ -304,38 +301,22 @@ export const inlineStyle_395_14 = {
   flex: 1,
 };
 
-export const inlineStyle_464_14 = (
-  {
-    width: width,
-  },
-) => ({
+export const inlineStyle_464_14 = ({ width: _width }) => ({
   width,
   flex: 1,
 });
 
-export const inlineStyle_475_14 = (
-  {
-    width: width,
-  },
-) => ({
+export const inlineStyle_475_14 = ({ width: _width }) => ({
   width,
   flex: 1,
 });
 
-export const inlineStyle_485_14 = (
-  {
-    width: width,
-  },
-) => ({
+export const inlineStyle_485_14 = ({ width: _width }) => ({
   width,
   flex: 1,
 });
 
-export const inlineStyle_128_8 = (
-  {
-    canEdit: canEdit,
-  },
-) => ({
+export const inlineStyle_128_8 = ({ canEdit }) => ({
   padding: 16,
   paddingBottom: canEdit ? 120 : 40,
 });
