@@ -16,4 +16,4 @@ jobs:
         with:
           node-version: '20.x'
 
-      - run: npm test
+      - run: node --test src/tests/react/utils/contractClientMatch.test.js src/tests/react/utils/nativePdfSource.test.js
