@@ -5,11 +5,17 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStores } from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import RenderHTML from 'react-native-render-html';
+import Pdf from 'react-native-pdf';
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import { colors } from '@controleonline/../../src/styles/colors';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
 const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
+const {
+  buildNativePdfSource,
+  isRemotePdfUrl,
+  normalizePdfContent,
+} = require('../utils/nativePdfSource');
 import styles from './ContractDetails.styles';
 
 import {
@@ -38,7 +44,9 @@ const PdfViewerFromContent = ({ content }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!content || content.length === 0) {
+    const normalizedContent = normalizePdfContent(content);
+
+    if (!normalizedContent) {
       setError('Nenhum conteúdo de PDF recebido');
       return;
     }
@@ -46,11 +54,10 @@ const PdfViewerFromContent = ({ content }) => {
     let url = null;
 
     try {
-      // NÃO modifica, limpa ou mascara nada — assume que content é base64 puro
-      console.log('Tentando decodificar base64. Tamanho da string:', content.length);
-      console.log('Primeiros 20 caracteres (deve começar com JVBER...):', content.substring(0, 20));
+      console.log('Tentando decodificar base64. Tamanho da string:', normalizedContent.length);
+      console.log('Primeiros 20 caracteres (deve começar com JVBER...):', normalizedContent.substring(0, 20));
 
-      const byteCharacters = atob(content); // Decodifica diretamente
+      const byteCharacters = atob(normalizedContent);
       const byteNumbers = new Uint8Array(byteCharacters.length);
 
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -67,7 +74,7 @@ const PdfViewerFromContent = ({ content }) => {
       setError(
         'Não foi possível exibir o PDF.\n\n' +
         'O conteúdo recebido não é um base64 válido ou está corrompido.\n' +
-        'Tamanho recebido: ' + content.length + ' caracteres.\n'
+        'Tamanho recebido: ' + normalizedContent.length + ' caracteres.\n'
       );
     }
 
@@ -78,38 +85,74 @@ const PdfViewerFromContent = ({ content }) => {
 
   if (error) {
     return (
-      <View style={inlineStyle_61_12({
-        height: height,
-      })}>
+      <View style={inlineStyle_61_12({ height })}>
         <Icon name="error-outline" size={64} color="red" />
-        <Text style={inlineStyle_63_14}>
-          {error}
-        </Text>
+        <Text style={inlineStyle_63_14}>{error}</Text>
       </View>
     );
   }
 
   if (!pdfUrl) {
     return (
-      <View style={inlineStyle_72_12({
-        height: height,
-      })}>
+      <View style={inlineStyle_72_12({ height })}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={inlineStyle_74_14}>
-          Preparando visualização do PDF...
-        </Text>
+        <Text style={inlineStyle_74_14}>Preparando visualização do PDF...</Text>
       </View>
     );
   }
 
   return (
-    <View style={inlineStyle_82_10({
-      height: height,
-    })}>
-      <iframe
-        title="pdf-viewer"
-        src={pdfUrl}
-        style={inlineStyle_86_8}
+    <View style={inlineStyle_82_10({ height })}>
+      <iframe title="pdf-viewer" src={pdfUrl} style={inlineStyle_86_8} />
+    </View>
+  );
+};
+
+const NativePdfViewer = ({ content }) => {
+  const normalizedContent = normalizePdfContent(content);
+  const pdfSource = buildNativePdfSource(normalizedContent);
+  const isUnsupportedRemotePdf = isRemotePdfUrl(normalizedContent);
+  const [hasPdfError, setHasPdfError] = useState(false);
+
+  useEffect(() => {
+    setHasPdfError(false);
+  }, [content]);
+
+  if (!pdfSource && !isUnsupportedRemotePdf) {
+    return (
+      <View style={styles.centerContainer}>
+        <Icon name="error-outline" size={64} color={colors.error} />
+        <Text style={styles.errorText}>Nenhum conteúdo de PDF recebido</Text>
+      </View>
+    );
+  }
+
+  if (isUnsupportedRemotePdf || hasPdfError) {
+    return (
+      <View style={styles.centerContainer}>
+        <Icon name="error-outline" size={64} color={colors.error} />
+        <Text style={styles.errorText}>Não foi possível exibir o PDF neste dispositivo.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.nativePdfContainer}>
+      <Pdf
+        source={pdfSource}
+        style={styles.nativePdf}
+        trustAllCerts={false}
+        enablePaging
+        renderActivityIndicator={() => (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Carregando PDF...</Text>
+          </View>
+        )}
+        onError={(error) => {
+          console.log('Erro ao renderizar PDF no mobile', error);
+          setHasPdfError(true);
+        }}
       />
     </View>
   );
@@ -125,11 +168,7 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
 
   return (
     <View style={inlineStyle_101_10}>
-      <ScrollView
-        style={styles.tabScroll}
-        contentContainerStyle={inlineStyle_128_8({
-          canEdit: canEdit,
-        })}>
+      <ScrollView style={styles.tabScroll} contentContainerStyle={inlineStyle_128_8({ canEdit })}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{contractDocumentLabel}</Text>
 
@@ -152,10 +191,7 @@ const MinutaTab = ({ contract, fileContent, fileLoading, fileError, canEdit, han
               ) : Platform.OS === 'web' ? (
                 <PdfViewerFromContent content={fileContent} />
               ) : (
-                <View style={styles.centerContainer}>
-                  <Icon name="picture-as-pdf" size={64} color={colors.primary} />
-                  <Text style={styles.loadingText}>PDF não suportado inline no mobile</Text>
-                </View>
+                <NativePdfViewer content={fileContent} />
               )}
             </View>
           ) : (
@@ -207,7 +243,7 @@ const AssinantesTab = ({
               </View>
               <View style={inlineStyle_184_20}>
                 <Text style={styles.subscriberName}>{sub.people?.name || global.t?.t('contract', 'label', 'nameNotAvailable')}</Text>
-                <Text style={styles.subscriberRole}>{global.t?.t('contract', 'label', sub.peopleType)}</Text>
+                <Text style={styles.subscriberRole}>{sub.peopleType}</Text>
               </View>
               {canEdit && (
                 <TouchableOpacity onPress={() => handleRemoveSubscriber(sub.id)}>
@@ -224,9 +260,7 @@ const AssinantesTab = ({
 
             <TouchableOpacity style={styles.selectField} onPress={() => setPeoplePickerVisible(true)}>
               <Icon name="person-outline" size={20} color={colors.primary} style={inlineStyle_202_75} />
-              <Text style={inlineStyle_203_20({
-                selectedPerson: selectedPerson,
-              })}>
+              <Text style={inlineStyle_203_20({ selectedPerson })}>
                 {selectedPerson
                   ? people?.find((p) => p['@id'] === selectedPerson)?.name || global.t?.t('contract', 'label', 'selected')
                   : global.t?.t('contract', 'label', 'selectPerson')}
@@ -348,7 +382,7 @@ const ContractDetails = () => {
             } catch {
               return sub;
             }
-          }),
+          })
         );
         setSubscribers(resolved);
       }
@@ -497,9 +531,7 @@ const ContractDetails = () => {
           const idx = Math.round(e.nativeEvent.contentOffset.x / width);
           if (idx !== activeTab) setActiveTab(idx);
         }}>
-        <View style={inlineStyle_464_14({
-          width: width,
-        })}>
+        <View style={inlineStyle_464_14({ width })}>
           <MinutaTab
             contract={contract}
             fileContent={fileContent}
@@ -510,9 +542,7 @@ const ContractDetails = () => {
           />
         </View>
 
-        <View style={inlineStyle_475_14({
-          width: width,
-        })}>
+        <View style={inlineStyle_475_14({ width })}>
           <LinkedOrderProductsTab
             contract={contract}
             canEdit={canEdit}
@@ -522,9 +552,7 @@ const ContractDetails = () => {
           />
         </View>
 
-        <View style={inlineStyle_485_14({
-          width: width,
-        })}>
+        <View style={inlineStyle_485_14({ width })}>
           <AssinantesTab
             subscribers={subscribers}
             canEdit={canEdit}
