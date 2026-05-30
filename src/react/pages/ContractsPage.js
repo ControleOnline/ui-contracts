@@ -1,3 +1,16 @@
+/*
+ * Contract imported from AGENTS.md
+ * ## Escopo
+ * - `ui-contracts` e a tela React de gestao de contratos.
+ * - Este arquivo e a entrada ativa do fluxo de contratos em `src/react`.
+ *
+ * ## Estado
+ * - Se existir `src/vue`, ela e apenas legado e nao deve receber este contrato.
+ *
+ * ## Limites
+ * - Nao duplicar a regra de contrato em paginas paralelas.
+ * - Manter a logica de apresentacao e navegacao de contratos aqui.
+ */
 import React, { useCallback, useState, useEffect, useLayoutEffect } from 'react';
 import { Text, View, TouchableOpacity, FlatList, ActivityIndicator, TextInput, RefreshControl, ScrollView } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
