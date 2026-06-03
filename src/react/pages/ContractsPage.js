@@ -5,7 +5,6 @@
  * - Este arquivo e a entrada ativa do fluxo de contratos em `src/react`.
  *
  * ## Estado
- * - Se existir `src/vue`, ela e apenas legado e nao deve receber este contrato.
  *
  * ## Limites
  * - Nao duplicar a regra de contrato em paginas paralelas.
