@@ -403,29 +403,26 @@ const ContractsPage = () => {
     return map[normalized] || status || global.t?.t('contract','label', 'na');
   };
 
-  const statusFilterOptions = React.useMemo(
-    () => [
-      {
-        key: 'realStatus:open',
-        label: global.t?.t('contract','status', 'open') || 'Em aberto',
-        color: getStatusColor('open'),
-        normalizedStatus: 'open',
-      },
-      {
-        key: 'realStatus:pending',
-        label: global.t?.t('contract','status', 'pending') || 'Pendente',
-        color: getStatusColor('pending'),
-        normalizedStatus: 'pending',
-      },
-      {
-        key: 'realStatus:closed',
-        label: global.t?.t('contract','status', 'closed') || 'Fechado',
-        color: getStatusColor('closed'),
-        normalizedStatus: 'closed',
-      },
-    ],
-    [],
-  );
+  const statusFilterOptions = [
+    {
+      key: 'realStatus:open',
+      label: global.t?.t('contract','status', 'open') || 'Em aberto',
+      color: getStatusColor('open'),
+      normalizedStatus: 'open',
+    },
+    {
+      key: 'realStatus:pending',
+      label: global.t?.t('contract','status', 'pending') || 'Pendente',
+      color: getStatusColor('pending'),
+      normalizedStatus: 'pending',
+    },
+    {
+      key: 'realStatus:closed',
+      label: global.t?.t('contract','status', 'closed') || 'Fechado',
+      color: getStatusColor('closed'),
+      normalizedStatus: 'closed',
+    },
+  ];
 
   const contractMatchesStatusFilter = useCallback(
     (contract, filterKey) => {
