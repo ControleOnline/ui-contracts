@@ -73,7 +73,6 @@ items:[],
       },
       {
         sortable: true,
-        translate: true,
         name: "status",
         align: "left",
         label: "status",
