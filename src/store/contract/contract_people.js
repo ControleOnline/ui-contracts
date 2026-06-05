@@ -51,6 +51,7 @@ items:[],
       {
         editable: true,
         sortable: true,
+        translate: true,
         name: "peopleType",
         align: "left",
         label: "peopleType",
