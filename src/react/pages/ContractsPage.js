@@ -42,7 +42,6 @@ const ContractsPage = () => {
   const [searchText, setSearchText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [refreshing, setRefreshing] = useState(false);
   const [allContracts, setAllContracts] = useState([]);
   const [selectedStatusFilterKey, setSelectedStatusFilterKey] = useState('');
@@ -210,7 +209,6 @@ const ContractsPage = () => {
         provider: currentCompany.id,
         'contractModel.context': 'contract',
         page: page ?? currentPage,
-        itemsPerPage,
       };
 
       const normalizedQuery = String(query ?? searchQuery).trim();
@@ -229,7 +227,7 @@ const ContractsPage = () => {
 
       contractActions.getItems(params);
     },
-    [currentCompany?.id, currentPage, itemsPerPage, searchQuery, selectedStatusFilterKey],
+    [currentCompany?.id, currentPage, searchQuery, selectedStatusFilterKey],
   );
 
   useLayoutEffect(() => {
@@ -345,7 +343,7 @@ const ContractsPage = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, itemsPerPage, selectedStatusFilterKey]);
+  }, [searchQuery, selectedStatusFilterKey]);
 
   const handleCreateSuccess = () => {
     fetchContracts(searchQuery, 1);

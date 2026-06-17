@@ -106,7 +106,6 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
 
       const clientParams = buildOwnedClientsParams({
         currentCompanyId: currentCompany.id,
-        itemsPerPage: 100,
       });
 
       await Promise.all([
