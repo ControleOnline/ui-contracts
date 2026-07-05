@@ -5,7 +5,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import AnimatedModal from '@controleonline/ui-crm/src/react/components/AnimatedModal';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import { buildOwnedClientsParams, getPeopleDisplayName } from '@controleonline/ui-common/src/react/utils/peopleDisplay';
-import styles from './CreateContractModal.styles';
+import {createStyles} from './CreateContractModal.styles';
+import {buildContractsPalette} from '../theme/contractsTheme';
 
 import {
   addProductsToOrder,
@@ -15,13 +16,6 @@ import {
   fetchOrderProducts,
   normalizeEntityId,
 } from '@controleonline/ui-common/src/react/utils/commercialDocumentOrders';
-
-import {
-  inlineStyle_438_6,
-  inlineStyle_458_67,
-  inlineStyle_473_71,
-  inlineStyle_517_18,
-} from './CreateContractModal.styles';
 
 const MONTHS = [
   'Janeiro',
@@ -55,6 +49,10 @@ const formatApiError = error => {
 
 const CreateContractModal = ({ visible, onClose, onSuccess }) => {
   const messageApi = useMessage() || {};
+  const themeStore = useStore('theme');
+  const themeColors = themeStore?.getters?.colors || {};
+  const palette = useMemo(() => buildContractsPalette(themeColors), [themeColors]);
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const contractStore = useStore('contract');
   const contractActions = contractStore.actions;
   const peopleStore = useStore('people');
@@ -278,13 +276,13 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
           <View style={styles.pickerModalHeader}>
             <Text style={styles.pickerModalTitle}>Selecionar modelo do contrato</Text>
             <TouchableOpacity onPress={() => setModelPickerVisible(false)}>
-              <Icon name="close" size={24} color="#666666" />
+              <Icon name="close" size={24} color={palette.modalCloseIcon} />
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.pickerModalBody}>
             {loadingModels ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#2529a1" />
+                <ActivityIndicator size="small" color={palette.loadingSpinner} />
                 <Text style={styles.loadingText}>Carregando modelos...</Text>
               </View>
             ) : contractModels.length > 0 ? (
@@ -298,20 +296,24 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
                   }}>
                   <View style={styles.optionInfo}>
                     <View style={styles.iconContainer}>
-                      <Icon name="description" size={20} color="#2529a1" />
+                      <Icon name="description" size={20} color={palette.iconInfo} />
                     </View>
                     <Text style={[styles.optionName, selectedModel === model['@id'] && styles.selectOptionTextActive]}>
                       {model.model}
                     </Text>
                   </View>
                   {selectedModel === model['@id'] && (
-                    <Icon name="check-circle" size={24} color="#4CAF50" />
+                    <Icon
+                      name="check-circle"
+                      size={24}
+                      color={palette.iconSuccess}
+                    />
                   )}
                 </TouchableOpacity>
               ))
             ) : (
               <View style={styles.emptyState}>
-                <Icon name="description" size={48} color="#CCCCCC" />
+                <Icon name="description" size={48} color={palette.iconDisabled} />
                 <Text style={styles.emptyText}>Nenhum modelo encontrado.</Text>
               </View>
             )}
@@ -332,7 +334,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
           <View style={styles.pickerModalHeader}>
             <Text style={styles.pickerModalTitle}>Selecionar responsavel do cliente</Text>
             <TouchableOpacity onPress={() => setClientPickerVisible(false)}>
-              <Icon name="close" size={24} color="#666666" />
+              <Icon name="close" size={24} color={palette.modalCloseIcon} />
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.pickerModalBody}>
@@ -347,20 +349,24 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
                   }}>
                   <View style={styles.optionInfo}>
                     <View style={styles.iconContainer}>
-                      <Icon name="person" size={20} color="#2529a1" />
+                      <Icon name="person" size={20} color={palette.iconInfo} />
                     </View>
                     <Text style={[styles.optionName, selectedClient === person['@id'] && styles.selectOptionTextActive]}>
                       {getPeopleDisplayName(person)}
                     </Text>
                   </View>
                   {selectedClient === person['@id'] && (
-                    <Icon name="check-circle" size={24} color="#4CAF50" />
+                    <Icon
+                      name="check-circle"
+                      size={24}
+                      color={palette.iconSuccess}
+                    />
                   )}
                 </TouchableOpacity>
               ))
             ) : (
               <View style={styles.emptyState}>
-                <Icon name="business" size={48} color="#CCCCCC" />
+                <Icon name="business" size={48} color={palette.iconDisabled} />
                 <Text style={styles.emptyText}>Nenhum cliente encontrado.</Text>
               </View>
             )}
@@ -381,7 +387,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
           <View style={styles.pickerModalHeader}>
             <Text style={styles.pickerModalTitle}>Selecionar dia</Text>
             <TouchableOpacity onPress={() => setDayPickerVisible(false)}>
-              <Icon name="close" size={24} color="#666666" />
+              <Icon name="close" size={24} color={palette.modalCloseIcon} />
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.pickerModalBody}>
@@ -415,7 +421,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
           <View style={styles.pickerModalHeader}>
             <Text style={styles.pickerModalTitle}>Selecionar mes</Text>
             <TouchableOpacity onPress={() => setMonthPickerVisible(false)}>
-              <Icon name="close" size={24} color="#666666" />
+              <Icon name="close" size={24} color={palette.modalCloseIcon} />
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.pickerModalBody}>
@@ -442,12 +448,12 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
     <AnimatedModal
       visible={visible}
       onRequestClose={handleClose}
-      style={inlineStyle_438_6}>
+      style={{justifyContent: 'flex-end'}}>
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Criar novo contrato</Text>
           <TouchableOpacity onPress={handleClose} style={styles.headerCloseButton}>
-            <Icon name="close" size={20} color="#64748B" />
+            <Icon name="close" size={20} color={palette.modalCloseIcon} />
           </TouchableOpacity>
         </View>
 
@@ -462,12 +468,25 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
             </Text>
             <TouchableOpacity style={styles.selectInput} onPress={() => setModelPickerVisible(true)}>
               <View style={styles.selectInputContent}>
-                <Icon name="description" size={20} color="#2529a1" style={inlineStyle_458_67} />
-                <Text style={[styles.selectInputText, { color: selectedModel ? '#1A1A1A' : '#999999' }]}>
+                <Icon
+                  name="description"
+                  size={20}
+                  color={palette.iconInfo}
+                  style={{marginRight: 8}}
+                />
+                <Text
+                  style={[
+                    styles.selectInputText,
+                    {
+                      color: selectedModel
+                        ? palette.selectText
+                        : palette.selectPlaceholderText,
+                    },
+                  ]}>
                   {selectedModelName || 'Selecionar modelo'}
                 </Text>
               </View>
-              <Icon name="keyboard-arrow-down" size={24} color="#666666" />
+              <Icon name="keyboard-arrow-down" size={24} color={palette.selectIcon} />
             </TouchableOpacity>
           </View>
 
@@ -477,12 +496,25 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
             </Text>
             <TouchableOpacity style={styles.selectInput} onPress={() => setClientPickerVisible(true)}>
               <View style={styles.selectInputContent}>
-                <Icon name="business-center" size={20} color="#2529a1" style={inlineStyle_473_71} />
-                <Text style={[styles.selectInputText, { color: selectedClient ? '#1A1A1A' : '#999999' }]}>
+                <Icon
+                  name="business-center"
+                  size={20}
+                  color={palette.iconInfo}
+                  style={{marginRight: 8}}
+                />
+                <Text
+                  style={[
+                    styles.selectInputText,
+                    {
+                      color: selectedClient
+                        ? palette.selectText
+                        : palette.selectPlaceholderText,
+                    },
+                  ]}>
                   {selectedClientName || 'Selecionar responsavel'}
                 </Text>
               </View>
-              <Icon name="keyboard-arrow-down" size={24} color="#666666" />
+              <Icon name="keyboard-arrow-down" size={24} color={palette.selectIcon} />
             </TouchableOpacity>
           </View>
 
@@ -495,13 +527,13 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
                 <Text style={[styles.selectInputText, !startDay && styles.placeholderText]}>
                   {startDay || 'Dia'}
                 </Text>
-                <Icon name="arrow-drop-down" size={20} color="#666666" />
+                <Icon name="arrow-drop-down" size={20} color={palette.selectIcon} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.selectInputDate} onPress={() => setMonthPickerVisible(true)}>
                 <Text style={[styles.selectInputText, !startMonth && styles.placeholderText]}>
                   {startMonth ? MONTHS_SHORT[parseInt(startMonth, 10) - 1] : 'Mes'}
                 </Text>
-                <Icon name="arrow-drop-down" size={20} color="#666666" />
+                <Icon name="arrow-drop-down" size={20} color={palette.selectIcon} />
               </TouchableOpacity>
               <TextInput
                 style={styles.yearInput}
@@ -510,7 +542,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
                   setStartYear(String(text || '').replace(/\D/g, '').slice(0, 4))
                 }
                 placeholder="2026"
-                placeholderTextColor="#999999"
+                placeholderTextColor={palette.inputPlaceholderText}
                 keyboardType="numeric"
                 maxLength={4}
               />
@@ -519,9 +551,9 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
 
           <View style={styles.infoCard}>
             <View style={styles.infoIcon}>
-              <Icon name="sync-alt" size={20} color="#2529a1" />
+              <Icon name="sync-alt" size={20} color={palette.iconInfo} />
             </View>
-            <View style={inlineStyle_517_18}>
+            <View style={{flex: 1}}>
               <Text style={styles.infoTitle}>Produtos herdados da ultima proposta</Text>
               <Text style={styles.infoText}>
                 Ao criar o contrato, vamos copiar automaticamente os produtos da proposta mais recente deste cliente.
@@ -551,7 +583,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
             }}
             disabled={isLoading || !selectedModel || !selectedClient || !formatDate(startYear, startMonth, startDay)}>
             {isLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={palette.buttonText} />
             ) : (
               <Text style={styles.createButtonText}>Salvar contrato</Text>
             )}
