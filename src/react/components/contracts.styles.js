@@ -75,17 +75,21 @@ export const createStyles = palette =>
       alignItems: 'center',
       marginBottom: 12,
     },
+    infoAvatar: {
+      marginRight: 12,
+    },
+    infoContent: {
+      flex: 1,
+    },
     infoLabel: {
       fontSize: 14,
       color: palette.textMuted,
-      marginLeft: 8,
-      marginRight: 8,
+      marginBottom: 2,
     },
     infoValue: {
       fontSize: 14,
       fontWeight: '500',
       color: palette.cardText,
-      flex: 1,
     },
     dateContainer: {
       flexDirection: 'row',

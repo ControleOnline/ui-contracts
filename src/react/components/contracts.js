@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {useStores} from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
 import {createStyles} from './contracts.styles';
 import {
   buildContractsPalette,
@@ -17,7 +18,7 @@ const {
 
 const Contracts = ({client, parentCompanyIri = ''}) => {
   const themeStore = useStores(state => state.theme);
-  const themeColors = themeStore?.getters?.colors || {};
+  const themeColors = themeStore.getters.colors;
   const palette = useMemo(() => buildContractsPalette(themeColors), [themeColors]);
   const contractStyles = useMemo(() => createStyles(palette), [palette]);
   const peopleStore = useStores(state => state.people);
@@ -88,11 +89,23 @@ const Contracts = ({client, parentCompanyIri = ''}) => {
 
       <View style={contractStyles.contractBody}>
         <View style={contractStyles.infoRow}>
-          <Icon name="person" size={16} color={palette.listItemIcon} />
-          <Text style={contractStyles.infoLabel}>{global.t?.t('contract', 'label', 'beneficiary')}</Text>
-          <Text style={contractStyles.infoValue}>
-            {contract.provider.name}
-          </Text>
+          <UserAvatar
+            name={contract?.provider?.name}
+            size={36}
+            backgroundColor={palette.buttonBackground}
+            borderColor={palette.buttonText}
+            borderWidth={2}
+            textColor={palette.buttonText}
+            style={contractStyles.infoAvatar}
+          />
+          <View style={contractStyles.infoContent}>
+            <Text style={contractStyles.infoLabel}>
+              {global.t?.t('contract', 'label', 'beneficiary')}
+            </Text>
+            <Text style={contractStyles.infoValue}>
+              {contract.provider.name}
+            </Text>
+          </View>
         </View>
 
         <View style={contractStyles.dateContainer}>
