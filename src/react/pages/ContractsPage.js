@@ -1,23 +1,36 @@
-import React, { useCallback, useState, useEffect, useLayoutEffect } from 'react';
+/*
+ * Contract imported from AGENTS.md
+ * ## Escopo
+ * - `ui-contracts` e a tela React de gestao de contratos.
+ * - Este arquivo e a entrada ativa do fluxo de contratos em `src/react`.
+ *
+ * ## Estado
+ *
+ * ## Limites
+ * - Nao duplicar a regra de contrato em paginas paralelas.
+ * - Manter a logica de apresentacao e navegacao de contratos aqui.
+ */
+import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import { Text, View, TouchableOpacity, FlatList, ActivityIndicator, TextInput, RefreshControl, ScrollView } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useStore } from '@store';
-import { colors } from '@controleonline/../../src/styles/colors';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import IconAdd from 'react-native-vector-icons/MaterialIcons';
 import CreateContractModal from '../components/CreateContractModal';
 import { getPeopleDisplayName } from '@controleonline/ui-common/src/react/utils/peopleDisplay';
-import contractStyles from './ContractsPage.styles';
+import {createStyles} from './ContractsPage.styles';
+import {
+  buildContractsPalette,
+  getContractsStatusColor,
+  normalizeContractsStatusKey,
+} from '../theme/contractsTheme';
 const {resolveContractsListEmptyState} = require('../utils/contractEmptyState');
 
-import {
-  inlineStyle_587_20,
-  inlineStyle_600_76,
-  inlineStyle_608_65,
-  inlineStyle_633_18,
-} from './ContractsPage.styles';
-
 const ContractsPage = () => {
+  const themeStore = useStore('theme');
+  const themeColors = themeStore?.getters?.colors || {};
+  const palette = useMemo(() => buildContractsPalette(themeColors), [themeColors]);
+  const contractStyles = useMemo(() => createStyles(palette), [palette]);
   const peopleStore = useStore('people');
   const { currentCompany } = peopleStore.getters;
   const peopleActions = peopleStore.actions;
@@ -30,7 +43,6 @@ const ContractsPage = () => {
   const [searchText, setSearchText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [refreshing, setRefreshing] = useState(false);
   const [allContracts, setAllContracts] = useState([]);
   const [selectedStatusFilterKey, setSelectedStatusFilterKey] = useState('');
@@ -79,13 +91,6 @@ const ContractsPage = () => {
       ? String(peopleTypeById[personId] || '').trim().toUpperCase()
       : '';
   };
-
-  const normalizeStatusKey = value =>
-    String(value || '')
-      .trim()
-      .toLowerCase()
-      .replace(/[_-]+/g, ' ')
-      .replace(/\s+/g, ' ');
 
   const isLegalEntity = person => getResolvedPeopleType(person) === 'J';
 
@@ -198,7 +203,6 @@ const ContractsPage = () => {
         provider: currentCompany.id,
         'contractModel.context': 'contract',
         page: page ?? currentPage,
-        itemsPerPage,
       };
 
       const normalizedQuery = String(query ?? searchQuery).trim();
@@ -217,7 +221,7 @@ const ContractsPage = () => {
 
       contractActions.getItems(params);
     },
-    [currentCompany?.id, currentPage, itemsPerPage, searchQuery, selectedStatusFilterKey],
+    [currentCompany?.id, currentPage, searchQuery, selectedStatusFilterKey],
   );
 
   useLayoutEffect(() => {
@@ -333,7 +337,7 @@ const ContractsPage = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, itemsPerPage, selectedStatusFilterKey]);
+  }, [searchQuery, selectedStatusFilterKey]);
 
   const handleCreateSuccess = () => {
     fetchContracts(searchQuery, 1);
@@ -348,33 +352,11 @@ const ContractsPage = () => {
   }, [fetchContracts, searchQuery]);
 
   const getStatusColor = status => {
-    switch (normalizeStatusKey(status)) {
-      case 'open':
-      case 'aberto':
-        return '#3B82F6';
-      case 'ativo':
-      case 'active':
-      case 'assinado':
-      case 'signed':
-        return '#4CAF50';
-      case 'inativo':
-      case 'inactive':
-      case 'cancelado':
-      case 'canceled':
-        return '#F44336';
-      case 'pendente':
-      case 'pending':
-        return '#FF9800';
-      case 'closed':
-      case 'fechado':
-        return '#64748B';
-      default:
-        return '#757575';
-    }
+    return getContractsStatusColor(palette, status);
   };
 
   const getStatusLabel = status => {
-    const normalized = normalizeStatusKey(status);
+    const normalized = normalizeContractsStatusKey(status);
     const map = {
       open: global.t?.t('contract','status', 'open'),
       aberto: global.t?.t('contract','status', 'open'),
@@ -391,29 +373,26 @@ const ContractsPage = () => {
     return map[normalized] || status || global.t?.t('contract','label', 'na');
   };
 
-  const statusFilterOptions = React.useMemo(
-    () => [
-      {
-        key: 'realStatus:open',
-        label: global.t?.t('contract','status', 'open') || 'Em aberto',
-        color: getStatusColor('open'),
-        normalizedStatus: 'open',
-      },
-      {
-        key: 'realStatus:pending',
-        label: global.t?.t('contract','status', 'pending') || 'Pendente',
-        color: getStatusColor('pending'),
-        normalizedStatus: 'pending',
-      },
-      {
-        key: 'realStatus:closed',
-        label: global.t?.t('contract','status', 'closed') || 'Fechado',
-        color: getStatusColor('closed'),
-        normalizedStatus: 'closed',
-      },
-    ],
-    [],
-  );
+  const statusFilterOptions = [
+    {
+      key: 'realStatus:open',
+      label: global.t?.t('contract','status', 'open') || 'Em aberto',
+      color: getStatusColor('open'),
+      normalizedStatus: 'open',
+    },
+    {
+      key: 'realStatus:pending',
+      label: global.t?.t('contract','status', 'pending') || 'Pendente',
+      color: getStatusColor('pending'),
+      normalizedStatus: 'pending',
+    },
+    {
+      key: 'realStatus:closed',
+      label: global.t?.t('contract','status', 'closed') || 'Fechado',
+      color: getStatusColor('closed'),
+      normalizedStatus: 'closed',
+    },
+  ];
 
   const contractMatchesStatusFilter = useCallback(
     (contract, filterKey) => {
@@ -421,10 +400,10 @@ const ContractsPage = () => {
         return true;
       }
 
-      const normalizedStatus = normalizeStatusKey(
+      const normalizedStatus = normalizeContractsStatusKey(
         contract?.status?.realStatus || contract?.status?.status,
       );
-      const normalizedFilter = normalizeStatusKey(
+      const normalizedFilter = normalizeContractsStatusKey(
         String(filterKey || '').replace('realStatus:', ''),
       );
 
@@ -466,7 +445,7 @@ const ContractsPage = () => {
 
       <View style={contractStyles.contractBody}>
         <View style={contractStyles.infoRow}>
-          <Icon name="user" size={16} color="#64748B" />
+          <Icon name="user" size={16} color={palette.listItemIcon} />
           <Text style={contractStyles.infoLabel}>Cliente:</Text>
           <Text style={contractStyles.infoValue}>
             {(() => {
@@ -484,14 +463,14 @@ const ContractsPage = () => {
 
         <View style={contractStyles.dateContainer}>
           <View style={contractStyles.dateItem}>
-            <Icon name="calendar" size={16} color="#64748B" />
+            <Icon name="calendar" size={16} color={palette.listItemIcon} />
             <Text style={contractStyles.dateLabel}>Início</Text>
             <Text style={contractStyles.dateValue}>
               {new Date(contract.startDate).toLocaleDateString('pt-br')}
             </Text>
           </View>
           <View style={contractStyles.dateItem}>
-            <Icon name="calendar" size={16} color="#64748B" />
+            <Icon name="calendar" size={16} color={palette.listItemIcon} />
             <Text style={contractStyles.dateLabel}>Término</Text>
             <Text style={contractStyles.dateValue}>
               {new Date(contract.endDate).toLocaleDateString('pt-br')}
@@ -506,7 +485,7 @@ const ContractsPage = () => {
           navigation.navigate('ContractDetails', { contractId: contract.id })
         }>
         <Text style={contractStyles.viewButtonText}>Ver Detalhes</Text>
-        <Icon name="arrow-right" size={16} color="#FFFFFF" />
+        <Icon name="arrow-right" size={16} color={palette.buttonIcon} />
       </TouchableOpacity>
     </View>
   );
@@ -516,27 +495,31 @@ const ContractsPage = () => {
       <View style={contractStyles.subHeader}>
         <View style={contractStyles.searchRow}>
           <View style={contractStyles.searchInputContainer}>
-            <Icon name="search" size={16} color="#94A3B8" />
+            <Icon name="search" size={16} color={palette.inputIcon} />
             <TextInput
               style={contractStyles.searchInput}
               placeholder="Buscar cliente..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={palette.inputPlaceholderText}
               value={searchText}
               onChangeText={setSearchText}
-              underlineColorAndroid="transparent"
+              underlineColorAndroid={palette.inputBackground}
             />
             {searchText.length > 0 && (
               <TouchableOpacity
                 onPress={() => setSearchText('')}
                 style={contractStyles.clearSearchButton}>
-                <Icon name="times-circle" size={16} color="#94A3B8" />
+                <Icon
+                  name="times-circle"
+                  size={16}
+                  color={palette.inputIcon}
+                />
               </TouchableOpacity>
             )}
           </View>
           <TouchableOpacity
             style={contractStyles.addButton}
             onPress={() => setCreateModalVisible(true)}>
-            <IconAdd name="add" size={24} color="#FFFFFF" />
+            <IconAdd name="add" size={24} color={palette.buttonIcon} />
           </TouchableOpacity>
         </View>
 
@@ -572,14 +555,16 @@ const ContractsPage = () => {
                     contractStyles.statusFilterChip,
                     isActive && contractStyles.statusFilterChipActive,
                     {
-                      borderColor: isActive ? item.color : '#DCE3EC',
-                      backgroundColor: isActive ? `${item.color}24` : '#F8FAFC',
+                      borderColor: isActive ? item.color : palette.chipBorder,
+                      backgroundColor: isActive
+                        ? palette.chipSelectedBackground
+                        : palette.chipBackground,
                     },
                   ]}>
                   <Text
                     style={[
                       contractStyles.statusFilterChipText,
-                      { color: isActive ? item.color : '#64748B' },
+                      { color: isActive ? item.color : palette.chipText },
                     ]}>
                     {item.label}
                   </Text>
@@ -597,7 +582,7 @@ const ContractsPage = () => {
         ListEmptyComponent={() => {
           if (isLoading && safeContracts.length === 0) {
             return (
-              <View style={inlineStyle_587_20}>
+              <View style={{paddingTop: 8}}>
                 {[1, 2, 3, 4].map((k) => (
                   <View key={k} style={contractStyles.skeletonCard}>
                     <View style={[contractStyles.skeletonLine, { width: '50%', height: 16, marginBottom: 12 }]} />
@@ -610,7 +595,12 @@ const ContractsPage = () => {
           if (error) {
             return (
               <View style={contractStyles.emptyContainer}>
-                <Icon name="exclamation-triangle" size={48} color="#e74c3c" style={inlineStyle_600_76} />
+                <Icon
+                  name="exclamation-triangle"
+                  size={48}
+                  color={palette.iconDanger}
+                  style={{marginBottom: 14}}
+                />
                 <Text style={contractStyles.emptyTitle}>Erro ao carregar contratos</Text>
                 <Text style={contractStyles.emptySubtitle}>Tente novamente mais tarde</Text>
               </View>
@@ -618,7 +608,12 @@ const ContractsPage = () => {
           }
           return (
             <View style={contractStyles.emptyContainer}>
-              <Icon name="file-text-o" size={64} color="#bdc3c7" style={inlineStyle_608_65} />
+              <Icon
+                name="file-text-o"
+                size={64}
+                color={palette.iconDisabled}
+                style={{marginBottom: 14}}
+              />
               <Text style={contractStyles.emptyTitle}>
                 {emptyState.title}
               </Text>
@@ -639,8 +634,8 @@ const ContractsPage = () => {
         onEndReachedThreshold={0.5}
         ListFooterComponent={() =>
           isLoading && safeContracts.length > 0 ? (
-            <View style={inlineStyle_633_18}>
-              <ActivityIndicator size="small" color={colors.primary} />
+            <View style={{paddingVertical: 20}}>
+              <ActivityIndicator size="small" color={palette.loadingSpinner} />
             </View>
           ) : null
         }

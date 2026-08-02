@@ -8,7 +8,7 @@ const contractRoutes = [
     options: {
       headerShown: true,
       headerBackVisible: true,
-      title: global.t?.t("ui-contracts", "title", "contract"),
+      title: () => global.t?.t("ui-contracts", "title", "contract"),
       showBottomToolBar: true,
     },
   },
@@ -21,7 +21,7 @@ const contractRoutes = [
       headerShown: true,
       headerBackVisible: true,
       companyFilterMode: 'icon',
-      title: global.t?.t("ui-contracts", "title", "contracts"),
+      title: () => global.t?.t("ui-contracts", "title", "contracts"),
     },
   },
 ];

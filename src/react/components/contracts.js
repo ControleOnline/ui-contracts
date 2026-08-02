@@ -1,13 +1,26 @@
 import React, {useCallback, useMemo} from 'react';
-import { Text, View, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import {ActivityIndicator, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {useStores} from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import contractStyles from './contracts.styles';
+import UserAvatar from '@controleonline/ui-common/src/react/components/UserAvatar';
+import {createStyles} from './contracts.styles';
+import {
+  buildContractsPalette,
+  getContractsStatusColor,
+} from '../theme/contractsTheme';
 const {resolveClientContractsEmptyState} = require('../utils/contractEmptyState');
+const {
+  buildClientContractsParams,
+  filterContractsByClient,
+} = require('../utils/contractClientMatch');
 
-const Contracts = ({client}) => {
+const Contracts = ({client, parentCompanyIri = ''}) => {
+  const themeStore = useStores(state => state.theme);
+  const themeColors = themeStore.getters.colors;
+  const palette = useMemo(() => buildContractsPalette(themeColors), [themeColors]);
+  const contractStyles = useMemo(() => createStyles(palette), [palette]);
   const peopleStore = useStores(state => state.people);
   const peopleGetters = peopleStore.getters;
   const {currentCompany} = peopleGetters;
@@ -22,66 +35,16 @@ const Contracts = ({client}) => {
   );
   const clientIri = client?.['@id'] || (clientId ? `/people/${clientId}` : '');
 
-  const normalizeDigits = value => String(value || '').replace(/\D/g, '');
-
-  const getEntryIdentifiers = entry => {
-    const identifiers = [];
-    const people = entry?.people;
-
-    if (typeof people === 'string') {
-      identifiers.push(people);
-      const digits = normalizeDigits(people);
-      if (digits) {
-        identifiers.push(digits);
-      }
-    } else if (people && typeof people === 'object') {
-      if (people['@id']) {
-        identifiers.push(people['@id']);
-      }
-      if (people.id != null) {
-        identifiers.push(String(people.id));
-      }
-    }
-
-    if (entry?.peopleId != null) {
-      identifiers.push(String(entry.peopleId));
-    }
-
-    return identifiers;
-  };
-
   const safeContracts = Array.isArray(contracts) ? contracts : [];
-  const contractsByClient = useMemo(() => {
-    if (!clientId) {
-      return safeContracts;
-    }
-
-    const hasInspectablePeople = safeContracts.some(contract =>
-      Array.isArray(contract?.peoples)
-        ? contract.peoples.some(entry => getEntryIdentifiers(entry).length > 0)
-        : false,
-    );
-
-    if (!hasInspectablePeople) {
-      return safeContracts;
-    }
-
-    return safeContracts.filter(contract =>
-      Array.isArray(contract?.peoples)
-        ? contract.peoples.some(entry =>
-            getEntryIdentifiers(entry).some(identifier => {
-              if (!identifier) {
-                return false;
-              }
-              return (
-                identifier === clientIri ||
-                normalizeDigits(identifier) === clientId
-              );
-            }),
-          )
-        : false,
-    );
-  }, [safeContracts, clientId, clientIri]);
+  const contractsByClient = useMemo(
+    () =>
+      filterContractsByClient(safeContracts, {
+        clientId,
+        clientIri,
+        parentCompanyIri,
+      }),
+    [safeContracts, clientId, clientIri, parentCompanyIri],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -89,27 +52,16 @@ const Contracts = ({client}) => {
         return;
       }
 
-      contractActions.getItems({
-        provider: currentCompany.id,
-        'contractModel.context': 'contract',
-        'peoples.people': clientIri,
-        'peoples.people.id': clientId,
-      });
-    }, [currentCompany?.id, clientId, clientIri]),
+      contractActions.getItems(
+        buildClientContractsParams({
+          currentCompanyId: currentCompany.id,
+          clientId,
+          clientIri,
+          parentCompanyIri,
+        }),
+      );
+    }, [currentCompany?.id, clientId, clientIri, parentCompanyIri, contractActions]),
   );
-
-  const getStatusColor = status => {
-    switch (status?.toLowerCase()) {
-      case 'ativo':
-        return '#4CAF50';
-      case 'inativo':
-        return '#F44336';
-      case 'pendente':
-        return '#FF9800';
-      default:
-        return '#757575';
-    }
-  };
 
   const renderContract = contract => (
     <View key={contract.id} style={contractStyles.contractCard}>
@@ -121,7 +73,12 @@ const Contracts = ({client}) => {
           <View
             style={[
               contractStyles.statusBadge,
-              {backgroundColor: getStatusColor(contract.status.status)},
+              {
+                backgroundColor: getContractsStatusColor(
+                  palette,
+                  contract?.status?.realStatus || contract?.status?.status,
+                ),
+              },
             ]}>
             <Text style={contractStyles.statusText}>
               {contract.status.status}
@@ -132,23 +89,39 @@ const Contracts = ({client}) => {
 
       <View style={contractStyles.contractBody}>
         <View style={contractStyles.infoRow}>
-          <Icon name="person" size={16} color="#666" />
-          <Text style={contractStyles.infoLabel}>{global.t?.t('contract', 'label', 'beneficiary')}</Text>
-          <Text style={contractStyles.infoValue}>
-            {contract.provider.name}
-          </Text>
+          <UserAvatar
+            name={contract?.provider?.name}
+            size={36}
+            backgroundColor={palette.buttonBackground}
+            borderColor={palette.buttonText}
+            borderWidth={2}
+            textColor={palette.buttonText}
+            style={contractStyles.infoAvatar}
+          />
+          <View style={contractStyles.infoContent}>
+            <Text style={contractStyles.infoLabel}>
+              {global.t?.t('contract', 'label', 'beneficiary')}
+            </Text>
+            <Text style={contractStyles.infoValue}>
+              {contract.provider.name}
+            </Text>
+          </View>
         </View>
 
         <View style={contractStyles.dateContainer}>
           <View style={contractStyles.dateItem}>
-            <Icon name="event" size={16} color="#666" />
+            <Icon name="event" size={16} color={palette.listItemIcon} />
             <Text style={contractStyles.dateLabel}>{global.t?.t('contract', 'label', 'start')}</Text>
             <Text style={contractStyles.dateValue}>
               {new Date(contract.startDate).toLocaleDateString('pt-br')}
             </Text>
           </View>
           <View style={contractStyles.dateItem}>
-            <Icon name="event-available" size={16} color="#666" />
+            <Icon
+              name="event-available"
+              size={16}
+              color={palette.listItemIcon}
+            />
             <Text style={contractStyles.dateLabel}>{global.t?.t('contract', 'label', 'end')}</Text>
             <Text style={contractStyles.dateValue}>
               {new Date(contract.endDate).toLocaleDateString('pt-br')}
@@ -163,7 +136,7 @@ const Contracts = ({client}) => {
           navigation.navigate('ContractDetails', {contractId: contract.id})
         }>
         <Text style={contractStyles.viewButtonText}>{global.t?.t('contract', 'label', 'viewDetails')}</Text>
-        <Icon name="arrow-forward" size={16} color="#FFFFFF" />
+        <Icon name="arrow-forward" size={16} color={palette.buttonIcon} />
       </TouchableOpacity>
     </View>
   );
@@ -184,14 +157,14 @@ const Contracts = ({client}) => {
 
       {isLoading ? (
         <View style={contractStyles.centerContent}>
-          <ActivityIndicator size="large" color="#2529a1" />
+          <ActivityIndicator size="large" color={palette.loadingSpinner} />
           <Text style={contractStyles.loadingText}>
             {global.t?.t('contract', 'label', 'loadingContracts')}
           </Text>
         </View>
       ) : error ? (
         <View style={contractStyles.centerContent}>
-          <Icon name="error-outline" size={48} color="#F44336" />
+          <Icon name="error-outline" size={48} color={palette.iconDanger} />
           <Text style={contractStyles.errorText}>
             {global.t?.t('contract', 'label', 'errorLoadingContracts')}
           </Text>
@@ -199,7 +172,7 @@ const Contracts = ({client}) => {
         </View>
       ) : contractsByClient.length === 0 ? (
         <View style={contractStyles.centerContent}>
-          <Icon name="description" size={48} color="#CCCCCC" />
+          <Icon name="description" size={48} color={palette.iconDisabled} />
           <Text style={contractStyles.emptyTitle}>
             {emptyState.title}
           </Text>
