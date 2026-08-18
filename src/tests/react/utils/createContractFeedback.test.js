@@ -5,10 +5,10 @@ const {buildCreateContractFeedback} = require('../../../react/utils/createContra
 
 const translate = (key, params = {}) => {
   const map = {
-    createdSuccessfully: 'Contrato criado com sucesso',
-    createdWithInheritedProducts: `Contrato criado com ${params.copiedProductsCount} produto(s) herdado(s) da ultima proposta`,
+    createdSuccessfully: 'Contract created successfully',
+    createdWithInheritedProducts: `Contract created with ${params.copiedProductsCount} product(s) inherited from the latest proposal`,
     noInheritedProducts:
-      'Nenhum produto foi herdado porque nao encontramos itens na ultima proposta',
+      'No products were inherited because no items were found on the latest proposal',
   }
   return map[key] || key
 }
@@ -19,7 +19,7 @@ test('success with inherited products and no warnings', () => {
     warningMessages: [],
     translate,
   })
-  assert.ok(result.successMessage.includes('3 produto(s)'))
+  assert.ok(result.successMessage.includes('3 product(s)'))
   assert.equal(result.warningMessage, '')
   assert.equal(result.infoMessage, '')
 })
@@ -30,8 +30,8 @@ test('success without products shows info', () => {
     warningMessages: [],
     translate,
   })
-  assert.equal(result.successMessage, 'Contrato criado com sucesso')
-  assert.ok(result.infoMessage.includes('Nenhum produto'))
+  assert.equal(result.successMessage, 'Contract created successfully')
+  assert.ok(result.infoMessage.includes('No products were inherited'))
   assert.equal(result.warningMessage, '')
 })
 
@@ -41,7 +41,7 @@ test('warnings keep success and surface warning text', () => {
     warningMessages: ['pedido vinculado falhou', 'produtos falharam'],
     translate,
   })
-  assert.equal(result.successMessage, 'Contrato criado com sucesso')
+  assert.equal(result.successMessage, 'Contract created successfully')
   assert.ok(result.warningMessage.includes('pedido vinculado falhou'))
   assert.ok(result.warningMessage.includes('produtos falharam'))
   assert.equal(result.infoMessage, '')
@@ -54,5 +54,5 @@ test('filters empty warning entries', () => {
     translate,
   })
   assert.equal(result.warningMessage, 'real warning')
-  assert.equal(result.successMessage, 'Contrato criado com sucesso')
+  assert.equal(result.successMessage, 'Contract created successfully')
 })

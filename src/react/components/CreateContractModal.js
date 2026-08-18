@@ -36,7 +36,7 @@ const MONTHS = [
 const MONTHS_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 const formatApiError = error => {
-  if (!error) return 'Nao foi possivel criar o contrato.';
+  if (!error) return 'Unable to create the contract.';
   if (typeof error === 'string') return error;
   if (Array.isArray(error?.message)) {
     return error.message
@@ -45,7 +45,7 @@ const formatApiError = error => {
       .join('\n');
   }
 
-  return error?.message || error?.description || error?.errmsg || 'Nao foi possivel criar o contrato.';
+  return error?.message || error?.description || error?.errmsg || 'Unable to create the contract.';
 };
 
 const CreateContractModal = ({ visible, onClose, onSuccess }) => {
@@ -182,12 +182,12 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
     const startDate = formatDate(startYear, startMonth, startDay);
 
     if (!selectedModel || !selectedClient) {
-      messageApi.showError?.('Selecione o modelo e o responsavel da empresa cliente.');
+      messageApi.showError?.('Select the model and the client company responsible.');
       return;
     }
 
     if (!startDate) {
-      messageApi.showError?.('Informe uma data inicial valida.');
+      messageApi.showError?.('Enter a valid start date.');
       return;
     }
 
@@ -219,7 +219,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
       } catch (linkedOrderError) {
         warningMessages.push(
           formatApiError(linkedOrderError) ||
-            'O contrato foi criado, mas o pedido vinculado nao ficou disponivel automaticamente.',
+            'Contract was created, but the linked order was not made available automatically.',
         );
       }
 
@@ -251,7 +251,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
       } catch (productsError) {
         warningMessages.push(
           formatApiError(productsError) ||
-            'O contrato foi criado, mas houve falha ao preparar os produtos vinculados.',
+            'Contract was created, but preparing linked products failed.',
         );
         copiedProductsCount = 0;
       }
@@ -265,15 +265,15 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
               return translated;
             }
           } catch (_) {
-            // fall through to local defaults
+            // no local PT fallbacks — rely on translation catalog or key
           }
         }
-
+        // English technical fallbacks only (no Portuguese UI literals)
         const defaults = {
-          createdSuccessfully: 'Contrato criado com sucesso',
-          createdWithInheritedProducts: `Contrato criado com ${params.copiedProductsCount || 0} produto(s) herdado(s) da ultima proposta`,
+          createdSuccessfully: 'Contract created successfully',
+          createdWithInheritedProducts: `Contract created with ${params.copiedProductsCount || 0} product(s) inherited from the latest proposal`,
           noInheritedProducts:
-            'Nenhum produto foi herdado porque nao encontramos itens na ultima proposta',
+            'No products were inherited because no items were found on the latest proposal',
         };
         return defaults[key] || key;
       };
