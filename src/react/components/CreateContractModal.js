@@ -16,6 +16,7 @@ import {
   fetchOrderProducts,
   normalizeEntityId,
 } from '@controleonline/ui-common/src/react/utils/commercialDocumentOrders';
+import {buildCreateContractFeedback} from '../utils/createContractFeedback';
 
 const MONTHS = [
   'Janeiro',
@@ -199,48 +200,100 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
         startDate,
       };
 
+      // Main save: only this failure is a total error for the user.
       const createdContract = await contractActions.save(contractData);
-      const createdOrder = await createLinkedOrder({
-        contractRef: createdContract?.['@id'],
-        provider: `/people/${currentCompany.id}`,
-        client: selectedClient,
-        payer: selectedClient,
-        app: 'CRM',
-        orderType: 'sale',
-      });
 
+      const warningMessages = [];
       let copiedProductsCount = 0;
-      const latestProposal = await fetchLatestProposalForClient({
-        provider: `/people/${currentCompany.id}`,
-        client: selectedClient,
-      });
+      let createdOrder = null;
 
-      if (latestProposal?.['@id']) {
-        const proposalOrder = await fetchLinkedOrder(latestProposal['@id']);
-        if (proposalOrder) {
-          const proposalProducts = await fetchOrderProducts(proposalOrder['@id'] || proposalOrder.id);
-          copiedProductsCount = proposalProducts.length;
-
-          if (copiedProductsCount > 0) {
-            await addProductsToOrder({
-              orderId: createdOrder?.id || createdOrder?.['@id'],
-              products: proposalProducts.map(orderProduct => ({
-                product: orderProduct?.product,
-                quantity: orderProduct?.quantity || 1,
-              })),
-            });
-          }
-        }
+      try {
+        createdOrder = await createLinkedOrder({
+          contractRef: createdContract?.['@id'],
+          provider: `/people/${currentCompany.id}`,
+          client: selectedClient,
+          payer: selectedClient,
+          app: 'CRM',
+          orderType: 'sale',
+        });
+      } catch (linkedOrderError) {
+        warningMessages.push(
+          formatApiError(linkedOrderError) ||
+            'O contrato foi criado, mas o pedido vinculado nao ficou disponivel automaticamente.',
+        );
       }
 
-      if (copiedProductsCount > 0) {
-        messageApi.showSuccess?.(
-          `Contrato criado com ${copiedProductsCount} produto(s) herdado(s) da ultima proposta.`,
+      try {
+        const latestProposal = await fetchLatestProposalForClient({
+          provider: `/people/${currentCompany.id}`,
+          client: selectedClient,
+        });
+
+        if (latestProposal?.['@id'] && createdOrder) {
+          const proposalOrder = await fetchLinkedOrder(latestProposal['@id']);
+          if (proposalOrder) {
+            const proposalProducts = await fetchOrderProducts(
+              proposalOrder['@id'] || proposalOrder.id,
+            );
+            copiedProductsCount = proposalProducts.length;
+
+            if (copiedProductsCount > 0) {
+              await addProductsToOrder({
+                orderId: createdOrder?.id || createdOrder?.['@id'],
+                products: proposalProducts.map(orderProduct => ({
+                  product: orderProduct?.product,
+                  quantity: orderProduct?.quantity || 1,
+                })),
+              });
+            }
+          }
+        }
+      } catch (productsError) {
+        warningMessages.push(
+          formatApiError(productsError) ||
+            'O contrato foi criado, mas houve falha ao preparar os produtos vinculados.',
         );
-      } else {
-        messageApi.showSuccess?.(
-          'Contrato criado. Nenhum produto foi herdado porque nao encontramos itens na ultima proposta.',
-        );
+        copiedProductsCount = 0;
+      }
+
+      const translateContractMessage = (key, params = {}) => {
+        const t = global?.t?.t;
+        if (typeof t === 'function') {
+          try {
+            const translated = t('contract', 'message', key, params);
+            if (translated && translated !== key) {
+              return translated;
+            }
+          } catch (_) {
+            // fall through to local defaults
+          }
+        }
+
+        const defaults = {
+          createdSuccessfully: 'Contrato criado com sucesso',
+          createdWithInheritedProducts: `Contrato criado com ${params.copiedProductsCount || 0} produto(s) herdado(s) da ultima proposta`,
+          noInheritedProducts:
+            'Nenhum produto foi herdado porque nao encontramos itens na ultima proposta',
+        };
+        return defaults[key] || key;
+      };
+
+      const feedback = buildCreateContractFeedback({
+        copiedProductsCount,
+        warningMessages,
+        translate: translateContractMessage,
+      });
+
+      if (feedback.successMessage) {
+        messageApi.showSuccess?.(feedback.successMessage);
+      }
+      if (feedback.warningMessage) {
+        messageApi.showWarning?.(feedback.warningMessage) ||
+          messageApi.showError?.(feedback.warningMessage);
+      }
+      if (feedback.infoMessage && !feedback.warningMessage) {
+        messageApi.showInfo?.(feedback.infoMessage) ||
+          messageApi.showSuccess?.(feedback.infoMessage);
       }
 
       onSuccess?.();
