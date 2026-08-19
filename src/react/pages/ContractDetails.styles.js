@@ -148,6 +148,16 @@ export const createStyles = palette =>
     htmlWrapper: {
       backgroundColor: palette.cardBackground,
     },
+    nativePdfContainer: {
+      height: 520,
+      width: '100%',
+      backgroundColor: palette.cardBackground,
+    },
+    nativePdf: {
+      flex: 1,
+      width: '100%',
+      backgroundColor: palette.cardBackground,
+    },
     fixedSignButtonContainer: {
       position: 'absolute',
       bottom: 0,
