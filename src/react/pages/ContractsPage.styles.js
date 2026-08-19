@@ -188,6 +188,28 @@ export const createStyles = palette =>
       fontWeight: '600',
       color: palette.cardText,
     },
+    cardActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingBottom: 12,
+    },
+    secondaryButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      backgroundColor: '#F1F5F9',
+    },
+    secondaryButtonText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: '#64748B',
+    },
     viewButton: {
       flexDirection: 'row',
       alignItems: 'center',
