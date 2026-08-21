@@ -5,6 +5,7 @@ import {
   buildContractProductsParams,
   buildContractDetailsParams,
 } from './contractNavigation';
+const {formatContractDate} = require('../utils/formatContractDate');
 
 const ContractCard = ({
   contract,
@@ -56,14 +57,14 @@ const ContractCard = ({
             <Icon name="calendar" size={16} color={palette.listItemIcon} />
             <Text style={contractStyles.dateLabel}>Início</Text>
             <Text style={contractStyles.dateValue}>
-              {new Date(contract.startDate).toLocaleDateString('pt-br')}
+              {formatContractDate(contract.startDate)}
             </Text>
           </View>
           <View style={contractStyles.dateItem}>
             <Icon name="calendar" size={16} color={palette.listItemIcon} />
             <Text style={contractStyles.dateLabel}>Término</Text>
             <Text style={contractStyles.dateValue}>
-              {new Date(contract.endDate).toLocaleDateString('pt-br')}
+              {formatContractDate(contract.endDate)}
             </Text>
           </View>
         </View>
