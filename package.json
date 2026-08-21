@@ -15,10 +15,11 @@
     "build": "node build/index.js",
     "build:js": "node build/script.javascript.js",
     "build:css": "node build/script.css.js",
-    "test": "npm run test:contract-empty-state && npm run test:contract-details-navigation && npm run test:contract-client-match",
+    "test": "npm run test:contract-empty-state && npm run test:contract-details-navigation && npm run test:contract-client-match && npm run test:format-contract-date",
     "test:contract-empty-state": "node --test src/tests/react/utils/contractEmptyState.test.js",
     "test:contract-details-navigation": "node --test src/tests/react/utils/contractDetailsNavigation.test.js",
     "test:contract-client-match": "node --test src/tests/react/utils/contractClientMatch.test.js",
+    "test:format-contract-date": "node --test src/tests/react/utils/formatContractDate.test.js",
     "test:coverage": "c8 --reporter=clover --report-dir coverage npm test"
   },
   "devDependencies": {

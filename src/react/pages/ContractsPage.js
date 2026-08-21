@@ -25,6 +25,7 @@ import {
   normalizeContractsStatusKey,
 } from '../theme/contractsTheme';
 const {resolveContractsListEmptyState} = require('../utils/contractEmptyState');
+const {formatContractDate} = require('../utils/formatContractDate');
 
 const ContractsPage = () => {
   const themeStore = useStore('theme');
@@ -466,14 +467,14 @@ const ContractsPage = () => {
             <Icon name="calendar" size={16} color={palette.listItemIcon} />
             <Text style={contractStyles.dateLabel}>Início</Text>
             <Text style={contractStyles.dateValue}>
-              {new Date(contract.startDate).toLocaleDateString('pt-br')}
+              {formatContractDate(contract.startDate)}
             </Text>
           </View>
           <View style={contractStyles.dateItem}>
             <Icon name="calendar" size={16} color={palette.listItemIcon} />
             <Text style={contractStyles.dateLabel}>Término</Text>
             <Text style={contractStyles.dateValue}>
-              {new Date(contract.endDate).toLocaleDateString('pt-br')}
+              {formatContractDate(contract.endDate)}
             </Text>
           </View>
         </View>
