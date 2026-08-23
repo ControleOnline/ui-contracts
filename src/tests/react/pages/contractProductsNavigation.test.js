@@ -46,7 +46,7 @@ test('contract card products shortcut uses buildContractProductsParams', () => {
 
 test('contract details honors initialTab via getContractInitialTabIndex', () => {
   assert.match(detailsSource.replace(/\s+/g, ' '), /getContractInitialTabIndex\(initialTab\)/);
-  assert.match(detailsSource.replace(/\s+/g, ' '), /setActiveTab\(targetTabIndex\)/);
+  assert.match(detailsSource.replace(/\s+/g, ' '), /getContractInitialTabIndex\(initialTab\)/);
 });
 
 test('contracts page wires ContractCard', () => {

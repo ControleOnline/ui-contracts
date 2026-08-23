@@ -29,12 +29,12 @@ const ContractCard = ({
       <View style={contractStyles.contractHeader}>
         <View style={contractStyles.headerContent}>
           <Text style={contractStyles.contractTitle}>
-            {contract.contractModel.model}
+            {contract.contractModel?.model || '—'}
           </Text>
           <View
             style={[
               contractStyles.statusBadge,
-              { backgroundColor: getStatusColor(contract.status.status) },
+              { backgroundColor: getStatusColor(contract.status?.status) },
             ]}>
             <Text style={contractStyles.statusText}>
               {getStatusLabel(
@@ -83,7 +83,7 @@ const ContractCard = ({
           <Text style={contractStyles.secondaryButtonText}>Produtos</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={contractStyles.viewButton}
+          style={[contractStyles.viewButton, contractStyles.viewButtonInCard]}
           onPress={() =>
             navigation.navigate(
               'ContractDetails',

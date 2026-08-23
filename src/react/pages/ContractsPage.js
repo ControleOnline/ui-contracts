@@ -17,6 +17,7 @@ import { useStore } from '@store';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import IconAdd from 'react-native-vector-icons/MaterialIcons';
 import CreateContractModal from '../components/CreateContractModal';
+import ContractCard from './ContractCard';
 import { getPeopleDisplayName } from '@controleonline/ui-common/src/react/utils/peopleDisplay';
 import {createStyles} from './ContractsPage.styles';
 import {
@@ -25,7 +26,6 @@ import {
   normalizeContractsStatusKey,
 } from '../theme/contractsTheme';
 const {resolveContractsListEmptyState} = require('../utils/contractEmptyState');
-const {formatContractDate} = require('../utils/formatContractDate');
 
 const ContractsPage = () => {
   const themeStore = useStore('theme');
@@ -426,70 +426,19 @@ const ContractsPage = () => {
   });
 
   const renderContract = contract => (
-    <View key={contract.id} style={contractStyles.contractCard}>
-      <View style={contractStyles.contractHeader}>
-        <View style={contractStyles.headerContent}>
-          <Text style={contractStyles.contractTitle}>
-            {contract.contractModel.model}
-          </Text>
-          <View
-            style={[
-              contractStyles.statusBadge,
-              { backgroundColor: getStatusColor(contract.status.status) },
-            ]}>
-            <Text style={contractStyles.statusText}>
-              {getStatusLabel(contract.status?.realStatus || contract.status?.status).toUpperCase()}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={contractStyles.contractBody}>
-        <View style={contractStyles.infoRow}>
-          <Icon name="user" size={16} color={palette.listItemIcon} />
-          <Text style={contractStyles.infoLabel}>Cliente:</Text>
-          <Text style={contractStyles.infoValue}>
-            {(() => {
-              const clientName = getContractClientName(contract);
-              if (clientName) {
-                return clientName;
-              }
-
-              return isContractClientPendingResolution(contract)
-                ? 'Carregando cliente...'
-                : 'Cliente nao informado';
-            })()}
-          </Text>
-        </View>
-
-        <View style={contractStyles.dateContainer}>
-          <View style={contractStyles.dateItem}>
-            <Icon name="calendar" size={16} color={palette.listItemIcon} />
-            <Text style={contractStyles.dateLabel}>Início</Text>
-            <Text style={contractStyles.dateValue}>
-              {formatContractDate(contract.startDate)}
-            </Text>
-          </View>
-          <View style={contractStyles.dateItem}>
-            <Icon name="calendar" size={16} color={palette.listItemIcon} />
-            <Text style={contractStyles.dateLabel}>Término</Text>
-            <Text style={contractStyles.dateValue}>
-              {formatContractDate(contract.endDate)}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <TouchableOpacity
-        style={contractStyles.viewButton}
-        onPress={() =>
-          navigation.navigate('ContractDetails', { contractId: contract.id })
-        }>
-        <Text style={contractStyles.viewButtonText}>Ver Detalhes</Text>
-        <Icon name="arrow-right" size={16} color={palette.buttonIcon} />
-      </TouchableOpacity>
-    </View>
+    <ContractCard
+      key={contract.id}
+      contract={contract}
+      navigation={navigation}
+      contractStyles={contractStyles}
+      palette={palette}
+      getStatusColor={getStatusColor}
+      getStatusLabel={getStatusLabel}
+      getContractClientName={getContractClientName}
+      isContractClientPendingResolution={isContractClientPendingResolution}
+    />
   );
+
 
   return (
     <View style={contractStyles.container}>

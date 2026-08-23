@@ -210,6 +210,13 @@ export const createStyles = palette =>
       fontWeight: '600',
       color: '#64748B',
     },
+    viewButtonInCard: {
+      margin: 0,
+      marginTop: 0,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      flex: 0,
+    },
     viewButton: {
       flexDirection: 'row',
       alignItems: 'center',
