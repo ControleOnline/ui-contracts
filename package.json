@@ -15,7 +15,7 @@
     "build": "node build/index.js",
     "build:js": "node build/script.javascript.js",
     "build:css": "node build/script.css.js",
-    "test": "npm run test:contract-empty-state && npm run test:contract-details-navigation && npm run test:contract-client-match && npm run test:create-contract-feedback && npm run test:native-pdf-source && npm run test:contract-products-navigation && npm run test:format-contract-date",
+    "test": "npm run test:contract-empty-state && npm run test:contract-details-navigation && npm run test:contract-client-match && npm run test:create-contract-feedback && npm run test:native-pdf-source && npm run test:contract-products-navigation && npm run test:format-contract-date && npm run test:contract-status",
     "test:contract-empty-state": "node --test src/tests/react/utils/contractEmptyState.test.js",
     "test:contract-details-navigation": "node --test src/tests/react/utils/contractDetailsNavigation.test.js",
     "test:contract-client-match": "node --test src/tests/react/utils/contractClientMatch.test.js",
@@ -23,7 +23,8 @@
     "test:native-pdf-source": "node --test src/tests/react/utils/nativePdfSource.test.js",
     "test:coverage": "c8 --reporter=clover --report-dir coverage npm test",
     "test:contract-products-navigation": "node --test src/tests/react/pages/contractProductsNavigation.test.js",
-    "test:format-contract-date": "node --test src/tests/react/utils/formatContractDate.test.js"
+    "test:format-contract-date": "node --test src/tests/react/utils/formatContractDate.test.js",
+    "test:contract-status": "node --test src/tests/react/utils/contractStatus.test.js"
   },
   "devDependencies": {
     "c8": "^10.1.3"

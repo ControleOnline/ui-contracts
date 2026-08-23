@@ -23,9 +23,13 @@ import {createStyles} from './ContractsPage.styles';
 import {
   buildContractsPalette,
   getContractsStatusColor,
-  normalizeContractsStatusKey,
 } from '../theme/contractsTheme';
 const {resolveContractsListEmptyState} = require('../utils/contractEmptyState');
+const {
+  contractMatchesStatusFilter,
+  getContractStatusFilterOptions,
+  getContractStatusLabel,
+} = require('../utils/contractStatus');
 
 const ContractsPage = () => {
   const themeStore = useStore('theme');
@@ -352,65 +356,16 @@ const ContractsPage = () => {
     setRefreshing(false);
   }, [fetchContracts, searchQuery]);
 
-  const getStatusColor = status => {
-    return getContractsStatusColor(palette, status);
-  };
+  const getStatusColor = status => getContractsStatusColor(palette, status);
 
-  const getStatusLabel = status => {
-    const normalized = normalizeContractsStatusKey(status);
-    const map = {
-      open: global.t?.t('contract','status', 'open'),
-      aberto: global.t?.t('contract','status', 'open'),
-      pending: global.t?.t('contract','status', 'pending'),
-      pendente: global.t?.t('contract','status', 'pending'),
-      closed: global.t?.t('contract','status', 'closed'),
-      fechado: global.t?.t('contract','status', 'closed'),
-      active: global.t?.t('contract','status', 'active'),
-      ativo: global.t?.t('contract','status', 'active'),
-      inactive: global.t?.t('contract','status', 'inactive'),
-      inativo: global.t?.t('contract','status', 'inactive'),
-    };
+  const getStatusLabel = status => getContractStatusLabel(status, global.t?.t);
 
-    return map[normalized] || status || global.t?.t('contract','label', 'na');
-  };
-
-  const statusFilterOptions = [
-    {
-      key: 'realStatus:open',
-      label: global.t?.t('contract','status', 'open') || 'Em aberto',
-      color: getStatusColor('open'),
-      normalizedStatus: 'open',
-    },
-    {
-      key: 'realStatus:pending',
-      label: global.t?.t('contract','status', 'pending') || 'Pendente',
-      color: getStatusColor('pending'),
-      normalizedStatus: 'pending',
-    },
-    {
-      key: 'realStatus:closed',
-      label: global.t?.t('contract','status', 'closed') || 'Fechado',
-      color: getStatusColor('closed'),
-      normalizedStatus: 'closed',
-    },
-  ];
-
-  const contractMatchesStatusFilter = useCallback(
-    (contract, filterKey) => {
-      if (!filterKey) {
-        return true;
-      }
-
-      const normalizedStatus = normalizeContractsStatusKey(
-        contract?.status?.realStatus || contract?.status?.status,
-      );
-      const normalizedFilter = normalizeContractsStatusKey(
-        String(filterKey || '').replace('realStatus:', ''),
-      );
-
-      return normalizedStatus === normalizedFilter;
-    },
-    [],
+  const statusFilterOptions = useMemo(
+    () =>
+      getContractStatusFilterOptions(global.t?.t, status =>
+        getContractsStatusColor(palette, status),
+      ),
+    [palette],
   );
 
   // Usa apenas os contratos que vêm da API (já filtrados e paginados)
