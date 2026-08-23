@@ -19,7 +19,8 @@
     "test:contract-empty-state": "node --test src/tests/react/utils/contractEmptyState.test.js",
     "test:contract-details-navigation": "node --test src/tests/react/utils/contractDetailsNavigation.test.js",
     "test:contract-client-match": "node --test src/tests/react/utils/contractClientMatch.test.js",
-    "test:coverage": "c8 --reporter=clover --report-dir coverage npm test"
+    "test:coverage": "c8 --reporter=clover --report-dir coverage npm test",
+    "test:format-contract-date": "node --test src/tests/react/utils/formatContractDate.test.js"
   },
   "devDependencies": {
     "c8": "^10.1.3"

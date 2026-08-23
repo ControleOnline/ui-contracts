@@ -9,6 +9,7 @@ import AnimatedModal from '@controleonline/ui-common/src/react/components/Animat
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
 const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
+const {formatContractDate} = require('../utils/formatContractDate');
 import {createStyles} from './ContractDetails.styles';
 import {
   buildContractsPalette,
@@ -491,13 +492,13 @@ const ContractDetails = () => {
           <View style={styles.dateBlock}>
             <Text style={styles.dateLabel}>Início</Text>
             <Text style={styles.dateValue}>
-              {contract.startDate ? new Date(contract.startDate).toLocaleDateString('pt-BR') : '—'}
+              {formatContractDate(contract.startDate)}
             </Text>
           </View>
           <View style={styles.dateBlock}>
             <Text style={styles.dateLabel}>Término</Text>
             <Text style={styles.dateValue}>
-              {contract.endDate ? new Date(contract.endDate).toLocaleDateString('pt-BR') : '—'}
+              {formatContractDate(contract.endDate)}
             </Text>
           </View>
         </View>
