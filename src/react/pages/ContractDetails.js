@@ -9,6 +9,7 @@ import AnimatedModal from '@controleonline/ui-common/src/react/components/Animat
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
 const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
+const {getContractInitialTabIndex} = require('./contractNavigation');
 import {createStyles} from './ContractDetails.styles';
 import {
   buildContractsPalette,
@@ -294,7 +295,7 @@ const AssinantesTab = ({
 const ContractDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { contractId } = route.params;
+  const { contractId, initialTab } = route.params || {};
 
   const { showSuccess, showError, showWarning } = useMessage();
 
@@ -319,7 +320,12 @@ const ContractDetails = () => {
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [newSubscriberRole, setNewSubscriberRole] = useState('Contractor');
   const [peoplePickerVisible, setPeoplePickerVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(() => getContractInitialTabIndex(initialTab));
+
+  useEffect(() => {
+    const targetTabIndex = getContractInitialTabIndex(initialTab);
+    setActiveTab(prev => (prev === targetTabIndex ? prev : targetTabIndex));
+  }, [initialTab]);
 
   const scrollRef = useRef(null);
   const contractStatusColor = getContractsStatusColor(
