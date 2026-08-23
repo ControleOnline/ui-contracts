@@ -11,7 +11,6 @@
  * - Manter a logica de apresentacao e navegacao de contratos aqui.
  */
 import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState} from 'react';
-import ContractCard from './ContractCard';
 import { Text, View, TouchableOpacity, FlatList, ActivityIndicator, TextInput, RefreshControl, ScrollView } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useStore } from '@store';
@@ -26,6 +25,7 @@ import {
   normalizeContractsStatusKey,
 } from '../theme/contractsTheme';
 const {resolveContractsListEmptyState} = require('../utils/contractEmptyState');
+const {formatContractDate} = require('../utils/formatContractDate');
 
 const ContractsPage = () => {
   const themeStore = useStore('theme');
@@ -52,19 +52,147 @@ const ContractsPage = () => {
   const normalizeDigits = value => String(value || '').replace(/\D/g, '');
   const normalizeText = value => String(value || '').trim();
 
-  const {
-    getContractClientName,
-    isContractClientPendingResolution,
-    getContractPartyCandidates,
-    extractPeopleId,
-    getResolvedPeopleName,
-    getResolvedPeopleType,
-  } = createContractClientResolvers({
-    currentCompany,
-    peopleNameById,
-    getPeopleDisplayName,
-  });
+  const extractPeopleId = person => {
+    if (!person) {
+      return '';
+    }
 
+    if (typeof person === 'string' || typeof person === 'number') {
+      return normalizeDigits(person);
+    }
+
+    return normalizeDigits(person?.['@id'] || person?.id || person?.people);
+  };
+
+  const resolvePeopleName = person => {
+    if (!person || typeof person !== 'object') {
+      return '';
+    }
+
+    return normalizeText(getPeopleDisplayName(person));
+  };
+
+  const getResolvedPeopleName = person => {
+    const directName = resolvePeopleName(person);
+    if (directName) {
+      return directName;
+    }
+
+    const personId = extractPeopleId(person);
+    return personId ? peopleNameById[personId] || '' : '';
+  };
+
+  const getResolvedPeopleType = person => {
+    if (person && typeof person === 'object' && person?.peopleType) {
+      return String(person.peopleType || '').trim().toUpperCase();
+    }
+
+    const personId = extractPeopleId(person);
+    return personId
+      ? String(peopleTypeById[personId] || '').trim().toUpperCase()
+      : '';
+  };
+
+  const isLegalEntity = person => getResolvedPeopleType(person) === 'J';
+
+  const getContractPartyCandidates = contract => {
+    const participants = Array.isArray(contract?.peoples) ? contract.peoples : [];
+    const participantsOrdered = [...participants].sort((left, right) => {
+      const leftType = String(left?.peopleType || '').trim().toLowerCase();
+      const rightType = String(right?.peopleType || '').trim().toLowerCase();
+
+      const weight = type => {
+        if (type === 'provider') return 0;
+        if (type === 'contractor') return 1;
+        if (type === 'witness') return 2;
+        return 3;
+      };
+
+      return weight(leftType) - weight(rightType);
+    });
+
+    return [
+      ...participantsOrdered.map(entry => entry?.people),
+      contract?.client,
+      contract?.customer,
+      contract?.contractor,
+      contract?.people,
+      contract?.provider,
+    ].filter(Boolean);
+  };
+
+  const isCurrentCompanyPerson = person => {
+    const reference = String(
+      typeof person === 'object' ? person?.['@id'] || person?.id : person || '',
+    ).trim();
+    const companyId = normalizeDigits(currentCompany?.id);
+    if (!reference || !companyId) {
+      return false;
+    }
+
+    const referenceDigits = extractPeopleId(reference);
+    return (
+      reference === `/people/${companyId}` ||
+      reference === `/peoples/${companyId}` ||
+      referenceDigits === companyId
+    );
+  };
+
+  const isIgnoredContractPartyId = (contract, personId) => {
+    if (!personId) {
+      return true;
+    }
+
+    const companyId = normalizeDigits(currentCompany?.id);
+    const modelPeopleId = normalizeDigits(contract?.contractModel?.people);
+    const signerId = normalizeDigits(contract?.contractModel?.signer);
+
+    return [companyId, modelPeopleId, signerId].some(
+      referenceId => referenceId && referenceId === personId,
+    );
+  };
+
+  const getContractClientName = contract => {
+    const candidates = getContractPartyCandidates(contract);
+    for (const candidate of candidates) {
+      const personId = extractPeopleId(candidate);
+      if (personId && isIgnoredContractPartyId(contract, personId)) {
+        continue;
+      }
+
+      if (personId && isCurrentCompanyPerson(candidate)) {
+        continue;
+      }
+
+      if (!isLegalEntity(candidate)) {
+        continue;
+      }
+
+      const name = getResolvedPeopleName(candidate);
+      if (name) {
+        return name;
+      }
+    }
+
+    return '';
+  };
+
+  const isContractClientPendingResolution = contract => {
+    const candidates = getContractPartyCandidates(contract);
+    return candidates.some(candidate => {
+      const personId = extractPeopleId(candidate);
+      if (!personId || isIgnoredContractPartyId(contract, personId)) {
+        return false;
+      }
+
+      if (isCurrentCompanyPerson(candidate) || !isLegalEntity(candidate)) {
+        return false;
+      }
+
+      const name = getResolvedPeopleName(candidate);
+      return !name;
+    });
+  };
 
   const fetchContracts = useCallback(
     (query, page, statusFilterParam) => {
@@ -298,17 +426,69 @@ const ContractsPage = () => {
   });
 
   const renderContract = contract => (
-    <ContractCard
-      key={contract.id}
-      contract={contract}
-      navigation={navigation}
-      contractStyles={contractStyles}
-      palette={palette}
-      getStatusColor={getStatusColor}
-      getStatusLabel={getStatusLabel}
-      getContractClientName={getContractClientName}
-      isContractClientPendingResolution={isContractClientPendingResolution}
-    />
+    <View key={contract.id} style={contractStyles.contractCard}>
+      <View style={contractStyles.contractHeader}>
+        <View style={contractStyles.headerContent}>
+          <Text style={contractStyles.contractTitle}>
+            {contract.contractModel.model}
+          </Text>
+          <View
+            style={[
+              contractStyles.statusBadge,
+              { backgroundColor: getStatusColor(contract.status.status) },
+            ]}>
+            <Text style={contractStyles.statusText}>
+              {getStatusLabel(contract.status?.realStatus || contract.status?.status).toUpperCase()}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={contractStyles.contractBody}>
+        <View style={contractStyles.infoRow}>
+          <Icon name="user" size={16} color={palette.listItemIcon} />
+          <Text style={contractStyles.infoLabel}>Cliente:</Text>
+          <Text style={contractStyles.infoValue}>
+            {(() => {
+              const clientName = getContractClientName(contract);
+              if (clientName) {
+                return clientName;
+              }
+
+              return isContractClientPendingResolution(contract)
+                ? 'Carregando cliente...'
+                : 'Cliente nao informado';
+            })()}
+          </Text>
+        </View>
+
+        <View style={contractStyles.dateContainer}>
+          <View style={contractStyles.dateItem}>
+            <Icon name="calendar" size={16} color={palette.listItemIcon} />
+            <Text style={contractStyles.dateLabel}>Início</Text>
+            <Text style={contractStyles.dateValue}>
+              {formatContractDate(contract.startDate)}
+            </Text>
+          </View>
+          <View style={contractStyles.dateItem}>
+            <Icon name="calendar" size={16} color={palette.listItemIcon} />
+            <Text style={contractStyles.dateLabel}>Término</Text>
+            <Text style={contractStyles.dateValue}>
+              {formatContractDate(contract.endDate)}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={contractStyles.viewButton}
+        onPress={() =>
+          navigation.navigate('ContractDetails', { contractId: contract.id })
+        }>
+        <Text style={contractStyles.viewButtonText}>Ver Detalhes</Text>
+        <Icon name="arrow-right" size={16} color={palette.buttonIcon} />
+      </TouchableOpacity>
+    </View>
   );
 
   return (

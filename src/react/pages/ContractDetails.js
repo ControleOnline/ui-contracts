@@ -1,22 +1,182 @@
 import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
-import { Text, View, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
+import { Text, View, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStores } from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import RenderHTML from 'react-native-render-html';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
 const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
 const {formatContractDate} = require('../utils/formatContractDate');
-const { getContractInitialTabIndex } = require('./contractNavigation');
 import {createStyles} from './ContractDetails.styles';
 import {
   buildContractsPalette,
   getContractsStatusColor,
 } from '../theme/contractsTheme';
-import MinutaTab from '../components/MinutaTab';
-const {width} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+
+const PdfViewerFromContent = ({ content, palette, styles }) => {
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!content || content.length === 0) {
+      setError('Nenhum conteúdo de PDF recebido');
+      return;
+    }
+
+    let url = null;
+
+    try {
+      // NÃO modifica, limpa ou mascara nada — assume que content é base64 puro
+      console.log('Tentando decodificar base64. Tamanho da string:', content.length);
+      console.log('Primeiros 20 caracteres (deve começar com JVBER...):', content.substring(0, 20));
+
+      const byteCharacters = atob(content); // Decodifica diretamente
+      const byteNumbers = new Uint8Array(byteCharacters.length);
+
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+
+      const blob = new Blob([byteNumbers], { type: 'application/pdf' });
+      console.log('Blob criado. Tamanho final:', blob.size, 'bytes');
+
+      url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+    } catch (err) {
+      console.error('Erro ao processar PDF (provavelmente não é base64 válido):', err);
+      setError(
+        'Não foi possível exibir o PDF.\n\n' +
+        'O conteúdo recebido não é um base64 válido ou está corrompido.\n' +
+        'Tamanho recebido: ' + content.length + ' caracteres.\n'
+      );
+    }
+
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [content]);
+
+  if (error) {
+    return (
+      <View
+        style={{
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: height * 0.75,
+          padding: 30,
+        }}>
+        <Icon name="error-outline" size={64} color={palette.iconDanger} />
+        <Text style={[styles.errorText, {marginTop: 16, lineHeight: 24}]}>
+          {error}
+        </Text>
+      </View>
+    );
+  }
+
+  if (!pdfUrl) {
+    return (
+      <View
+        style={{
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: height * 0.75,
+        }}>
+        <ActivityIndicator size="large" color={palette.loadingSpinner} />
+        <Text style={styles.loadingText}>
+          Preparando visualização do PDF...
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{height: height * 0.75, width: '100%'}}>
+      <iframe
+        title="pdf-viewer"
+        src={pdfUrl}
+        style={{width: '100%', height: '100%', border: 'none'}}
+      />
+    </View>
+  );
+};
+
+const MinutaTab = ({
+  canEdit,
+  contract,
+  fileContent,
+  fileError,
+  fileLoading,
+  handleSignContract,
+  palette,
+  styles,
+}) => {
+  const isHTML = fileContent?.trim?.().startsWith?.('<') ?? false;
+  const contractDocumentLabel =
+    contract?.status?.realStatus === 'closed'
+      ? global.t?.t('contract', 'label', 'contract')
+      : global.t?.t('contract', 'label', 'draft');
+  const loadingDocumentLabel = contractDocumentLabel || 'documento';
+
+  return (
+    <View style={{flex: 1}}>
+      <ScrollView
+        style={styles.tabScroll}
+        contentContainerStyle={{padding: 16, paddingBottom: canEdit ? 120 : 40}}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{contractDocumentLabel}</Text>
+
+          {fileLoading ? (
+            <View style={styles.centerContainer}>
+              <ActivityIndicator size="large" color={palette.loadingSpinner} />
+              <Text style={styles.loadingText}>{`Carregando ${loadingDocumentLabel}...`}</Text>
+            </View>
+          ) : fileError ? (
+            <Text style={styles.errorText}>{fileError}</Text>
+          ) : fileContent ? (
+            <View style={styles.htmlWrapper}>
+              {isHTML ? (
+                <RenderHTML
+                  contentWidth={width - 32}
+                  source={{ html: fileContent }}
+                  ignoredDomTags={['meta', 'title']}
+                  baseStyle={{color: palette.textSecondary, lineHeight: 24}}
+                />
+              ) : Platform.OS === 'web' ? (
+                <PdfViewerFromContent
+                  content={fileContent}
+                  palette={palette}
+                  styles={styles}
+                />
+              ) : (
+                <View style={styles.centerContainer}>
+                  <Icon name="picture-as-pdf" size={64} color={palette.iconInfo} />
+                  <Text style={styles.loadingText}>PDF não suportado inline no mobile</Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <View style={styles.centerContainer}>
+              <ActivityIndicator size="large" color={palette.loadingSpinner} />
+              <Text style={styles.loadingText}>{`Gerando ${loadingDocumentLabel}...`}</Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+      {canEdit && (
+        <View style={styles.fixedSignButtonContainer}>
+          <TouchableOpacity style={styles.signButton} onPress={handleSignContract}>
+            <Icon name="edit" size={20} color={palette.buttonIcon} />
+            <Text style={styles.signButtonText}>Assinar Contrato</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+};
 
 const AssinantesTab = ({
   subscribers,
@@ -135,7 +295,7 @@ const AssinantesTab = ({
 const ContractDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { contractId, initialTab } = route.params;
+  const { contractId } = route.params;
 
   const { showSuccess, showError, showWarning } = useMessage();
 
@@ -161,19 +321,8 @@ const ContractDetails = () => {
   const [newSubscriberRole, setNewSubscriberRole] = useState('Contractor');
   const [peoplePickerVisible, setPeoplePickerVisible] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+
   const scrollRef = useRef(null);
-
-  useEffect(() => {
-    const targetTabIndex = getContractInitialTabIndex(initialTab);
-    if (targetTabIndex === 1) {
-      setActiveTab(targetTabIndex);
-      requestAnimationFrame(() => {
-        scrollRef.current?.scrollTo({ x: targetTabIndex * width, animated: false });
-      });
-    }
-  }, [initialTab]);
-
-  
   const contractStatusColor = getContractsStatusColor(
     palette,
     contract?.status?.realStatus || contract?.status?.status,

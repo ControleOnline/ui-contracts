@@ -15,8 +15,29 @@ describe('formatContractDate', () => {
     assert.equal(formatContractDate(''), '—');
   });
 
+  it('returns em dash for whitespace-only string', () => {
+    assert.equal(formatContractDate('   '), '—');
+  });
+
+  it('returns em dash for false', () => {
+    assert.equal(formatContractDate(false), '—');
+  });
+
+  it('returns em dash for zero-date MySQL placeholders', () => {
+    assert.equal(formatContractDate('0000-00-00'), '—');
+    assert.equal(formatContractDate('0000-00-00 00:00:00'), '—');
+  });
+
   it('returns em dash for invalid date string', () => {
     assert.equal(formatContractDate('not-a-date'), '—');
+  });
+
+  it('returns em dash for string "Invalid Date"', () => {
+    assert.equal(formatContractDate('Invalid Date'), '—');
+  });
+
+  it('returns em dash for Invalid Date instance', () => {
+    assert.equal(formatContractDate(new Date(NaN)), '—');
   });
 
   it('formats a valid ISO date in pt-BR', () => {
@@ -32,5 +53,7 @@ describe('formatContractDate', () => {
   it('does not throw when endDate is missing (regression for Invalid Date)', () => {
     assert.doesNotThrow(() => formatContractDate(null));
     assert.notEqual(formatContractDate(null), 'Invalid Date');
+    assert.notEqual(formatContractDate(undefined), 'Invalid Date');
+    assert.notEqual(formatContractDate(''), 'Invalid Date');
   });
 });
