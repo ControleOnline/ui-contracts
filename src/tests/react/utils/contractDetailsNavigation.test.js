@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict')
-const {test} = global
+const {test} = require('node:test')
 
 const {
   resolveContractDetailsBackAction,
@@ -21,6 +21,16 @@ test('falls back to ContractsIndex when there is no back stack', () => {
     resolveContractDetailsBackAction({
       canGoBack: () => false,
     }),
+    {
+      type: 'route',
+      routeName: 'ContractsIndex',
+    },
+  )
+})
+
+test('falls back to ContractsIndex when canGoBack is absent', () => {
+  assert.deepEqual(
+    resolveContractDetailsBackAction({}),
     {
       type: 'route',
       routeName: 'ContractsIndex',

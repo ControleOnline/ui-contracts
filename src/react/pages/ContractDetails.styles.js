@@ -1,3 +1,4 @@
+
 import {Platform, StyleSheet} from 'react-native';
 
 export const createStyles = palette =>
@@ -16,13 +17,21 @@ export const createStyles = palette =>
       borderBottomColor: palette.headerBorder,
     },
     backButton: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+      minWidth: 44,
+      height: 36,
+      borderRadius: 18,
+      paddingHorizontal: 10,
+      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: palette.navigationActiveBackground,
       marginRight: 12,
+    },
+    backButtonText: {
+      marginLeft: 4,
+      fontSize: 14,
+      fontWeight: '600',
+      color: palette.navigationActiveIcon,
     },
     topAvatar: {
       width: 60,
