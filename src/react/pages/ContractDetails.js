@@ -457,12 +457,18 @@ const ContractDetails = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topHeader}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleBackPress}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+        >
           <Icon
             name="arrow-back"
-            size={24}
+            size={22}
             color={palette.navigationActiveIcon}
           />
+          <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
         <View style={styles.topAvatar}>
           <Icon name="description" size={32} color={palette.buttonIcon} />
