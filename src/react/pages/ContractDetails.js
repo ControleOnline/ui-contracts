@@ -11,8 +11,6 @@ import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/componen
 const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
 const {getContractInitialTabIndex} = require('./contractNavigation');
 const {formatContractDate} = require('../utils/formatContractDate');
-const {getContractInitialTabIndex} = require('./contractNavigation');
-const {getContractInitialTabIndex} = require('./contractNavigation');
 import {createStyles} from './ContractDetails.styles';
 import {
   buildContractsPalette,
