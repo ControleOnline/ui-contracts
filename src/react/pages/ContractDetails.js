@@ -9,8 +9,6 @@ import AnimatedModal from '@controleonline/ui-common/src/react/components/Animat
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
 const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
-const {getContractInitialTabIndex} = require('./contractNavigation');
-const {formatContractDate} = require('../utils/formatContractDate');
 import {createStyles} from './ContractDetails.styles';
 import {
   buildContractsPalette,
@@ -296,7 +294,7 @@ const AssinantesTab = ({
 const ContractDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { contractId, initialTab } = route.params || {};
+  const { contractId } = route.params;
 
   const { showSuccess, showError, showWarning } = useMessage();
 
@@ -321,12 +319,7 @@ const ContractDetails = () => {
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [newSubscriberRole, setNewSubscriberRole] = useState('Contractor');
   const [peoplePickerVisible, setPeoplePickerVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState(() => getContractInitialTabIndex(initialTab));
-
-  useEffect(() => {
-    const targetTabIndex = getContractInitialTabIndex(initialTab);
-    setActiveTab(prev => (prev === targetTabIndex ? prev : targetTabIndex));
-  }, [initialTab]);
+  const [activeTab, setActiveTab] = useState(0);
 
   const scrollRef = useRef(null);
   const contractStatusColor = getContractsStatusColor(
@@ -464,18 +457,12 @@ const ContractDetails = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topHeader}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBackPress}
-          accessibilityRole="button"
-          accessibilityLabel="Voltar"
-        >
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <Icon
             name="arrow-back"
-            size={22}
+            size={24}
             color={palette.navigationActiveIcon}
           />
-          <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
         <View style={styles.topAvatar}>
           <Icon name="description" size={32} color={palette.buttonIcon} />
@@ -504,13 +491,13 @@ const ContractDetails = () => {
           <View style={styles.dateBlock}>
             <Text style={styles.dateLabel}>Início</Text>
             <Text style={styles.dateValue}>
-              {formatContractDate(contract.startDate)}
+              {contract.startDate ? new Date(contract.startDate).toLocaleDateString('pt-BR') : '—'}
             </Text>
           </View>
           <View style={styles.dateBlock}>
             <Text style={styles.dateLabel}>Término</Text>
             <Text style={styles.dateValue}>
-              {formatContractDate(contract.endDate)}
+              {contract.endDate ? new Date(contract.endDate).toLocaleDateString('pt-BR') : '—'}
             </Text>
           </View>
         </View>

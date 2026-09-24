@@ -16,7 +16,6 @@ import {
   fetchOrderProducts,
   normalizeEntityId,
 } from '@controleonline/ui-common/src/react/utils/commercialDocumentOrders';
-import {buildCreateContractFeedback} from '../utils/createContractFeedback';
 
 const MONTHS = [
   'Janeiro',
@@ -36,7 +35,7 @@ const MONTHS = [
 const MONTHS_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 const formatApiError = error => {
-  if (!error) return 'Unable to create the contract.';
+  if (!error) return 'Nao foi possivel criar o contrato.';
   if (typeof error === 'string') return error;
   if (Array.isArray(error?.message)) {
     return error.message
@@ -45,7 +44,7 @@ const formatApiError = error => {
       .join('\n');
   }
 
-  return error?.message || error?.description || error?.errmsg || 'Unable to create the contract.';
+  return error?.message || error?.description || error?.errmsg || 'Nao foi possivel criar o contrato.';
 };
 
 const CreateContractModal = ({ visible, onClose, onSuccess }) => {
@@ -182,12 +181,12 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
     const startDate = formatDate(startYear, startMonth, startDay);
 
     if (!selectedModel || !selectedClient) {
-      messageApi.showError?.('Select the model and the client company responsible.');
+      messageApi.showError?.('Selecione o modelo e o responsavel da empresa cliente.');
       return;
     }
 
     if (!startDate) {
-      messageApi.showError?.('Enter a valid start date.');
+      messageApi.showError?.('Informe uma data inicial valida.');
       return;
     }
 
@@ -200,100 +199,48 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
         startDate,
       };
 
-      // Main save: only this failure is a total error for the user.
       const createdContract = await contractActions.save(contractData);
-
-      const warningMessages = [];
-      let copiedProductsCount = 0;
-      let createdOrder = null;
-
-      try {
-        createdOrder = await createLinkedOrder({
-          contractRef: createdContract?.['@id'],
-          provider: `/people/${currentCompany.id}`,
-          client: selectedClient,
-          payer: selectedClient,
-          app: 'CRM',
-          orderType: 'sale',
-        });
-      } catch (linkedOrderError) {
-        warningMessages.push(
-          formatApiError(linkedOrderError) ||
-            'Contract was created, but the linked order was not made available automatically.',
-        );
-      }
-
-      try {
-        const latestProposal = await fetchLatestProposalForClient({
-          provider: `/people/${currentCompany.id}`,
-          client: selectedClient,
-        });
-
-        if (latestProposal?.['@id'] && createdOrder) {
-          const proposalOrder = await fetchLinkedOrder(latestProposal['@id']);
-          if (proposalOrder) {
-            const proposalProducts = await fetchOrderProducts(
-              proposalOrder['@id'] || proposalOrder.id,
-            );
-            copiedProductsCount = proposalProducts.length;
-
-            if (copiedProductsCount > 0) {
-              await addProductsToOrder({
-                orderId: createdOrder?.id || createdOrder?.['@id'],
-                products: proposalProducts.map(orderProduct => ({
-                  product: orderProduct?.product,
-                  quantity: orderProduct?.quantity || 1,
-                })),
-              });
-            }
-          }
-        }
-      } catch (productsError) {
-        warningMessages.push(
-          formatApiError(productsError) ||
-            'Contract was created, but preparing linked products failed.',
-        );
-        copiedProductsCount = 0;
-      }
-
-      const translateContractMessage = (key, params = {}) => {
-        const t = global?.t?.t;
-        if (typeof t === 'function') {
-          try {
-            const translated = t('contract', 'message', key, params);
-            if (translated && translated !== key) {
-              return translated;
-            }
-          } catch (_) {
-            // no local PT fallbacks — rely on translation catalog or key
-          }
-        }
-        // English technical fallbacks only (no Portuguese UI literals)
-        const defaults = {
-          createdSuccessfully: 'Contract created successfully',
-          createdWithInheritedProducts: `Contract created with ${params.copiedProductsCount || 0} product(s) inherited from the latest proposal`,
-          noInheritedProducts:
-            'No products were inherited because no items were found on the latest proposal',
-        };
-        return defaults[key] || key;
-      };
-
-      const feedback = buildCreateContractFeedback({
-        copiedProductsCount,
-        warningMessages,
-        translate: translateContractMessage,
+      const createdOrder = await createLinkedOrder({
+        contractRef: createdContract?.['@id'],
+        provider: `/people/${currentCompany.id}`,
+        client: selectedClient,
+        payer: selectedClient,
+        app: 'CRM',
+        orderType: 'sale',
       });
 
-      if (feedback.successMessage) {
-        messageApi.showSuccess?.(feedback.successMessage);
+      let copiedProductsCount = 0;
+      const latestProposal = await fetchLatestProposalForClient({
+        provider: `/people/${currentCompany.id}`,
+        client: selectedClient,
+      });
+
+      if (latestProposal?.['@id']) {
+        const proposalOrder = await fetchLinkedOrder(latestProposal['@id']);
+        if (proposalOrder) {
+          const proposalProducts = await fetchOrderProducts(proposalOrder['@id'] || proposalOrder.id);
+          copiedProductsCount = proposalProducts.length;
+
+          if (copiedProductsCount > 0) {
+            await addProductsToOrder({
+              orderId: createdOrder?.id || createdOrder?.['@id'],
+              products: proposalProducts.map(orderProduct => ({
+                product: orderProduct?.product,
+                quantity: orderProduct?.quantity || 1,
+              })),
+            });
+          }
+        }
       }
-      if (feedback.warningMessage) {
-        messageApi.showWarning?.(feedback.warningMessage) ||
-          messageApi.showError?.(feedback.warningMessage);
-      }
-      if (feedback.infoMessage && !feedback.warningMessage) {
-        messageApi.showInfo?.(feedback.infoMessage) ||
-          messageApi.showSuccess?.(feedback.infoMessage);
+
+      if (copiedProductsCount > 0) {
+        messageApi.showSuccess?.(
+          `Contrato criado com ${copiedProductsCount} produto(s) herdado(s) da ultima proposta.`,
+        );
+      } else {
+        messageApi.showSuccess?.(
+          'Contrato criado. Nenhum produto foi herdado porque nao encontramos itens na ultima proposta.',
+        );
       }
 
       onSuccess?.();
