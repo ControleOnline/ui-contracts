@@ -17,19 +17,14 @@ import { useStore } from '@store';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import IconAdd from 'react-native-vector-icons/MaterialIcons';
 import CreateContractModal from '../components/CreateContractModal';
-import ContractCard from './ContractCard';
 import { getPeopleDisplayName } from '@controleonline/ui-common/src/react/utils/peopleDisplay';
 import {createStyles} from './ContractsPage.styles';
 import {
   buildContractsPalette,
   getContractsStatusColor,
+  normalizeContractsStatusKey,
 } from '../theme/contractsTheme';
 const {resolveContractsListEmptyState} = require('../utils/contractEmptyState');
-const {
-  contractMatchesStatusFilter,
-  getContractStatusFilterOptions,
-  getContractStatusLabel,
-} = require('../utils/contractStatus');
 
 const ContractsPage = () => {
   const themeStore = useStore('theme');
@@ -356,16 +351,65 @@ const ContractsPage = () => {
     setRefreshing(false);
   }, [fetchContracts, searchQuery]);
 
-  const getStatusColor = status => getContractsStatusColor(palette, status);
+  const getStatusColor = status => {
+    return getContractsStatusColor(palette, status);
+  };
 
-  const getStatusLabel = status => getContractStatusLabel(status, global.t?.t);
+  const getStatusLabel = status => {
+    const normalized = normalizeContractsStatusKey(status);
+    const map = {
+      open: global.t?.t('contract','status', 'open'),
+      aberto: global.t?.t('contract','status', 'open'),
+      pending: global.t?.t('contract','status', 'pending'),
+      pendente: global.t?.t('contract','status', 'pending'),
+      closed: global.t?.t('contract','status', 'closed'),
+      fechado: global.t?.t('contract','status', 'closed'),
+      active: global.t?.t('contract','status', 'active'),
+      ativo: global.t?.t('contract','status', 'active'),
+      inactive: global.t?.t('contract','status', 'inactive'),
+      inativo: global.t?.t('contract','status', 'inactive'),
+    };
 
-  const statusFilterOptions = useMemo(
-    () =>
-      getContractStatusFilterOptions(global.t?.t, status =>
-        getContractsStatusColor(palette, status),
-      ),
-    [palette],
+    return map[normalized] || status || global.t?.t('contract','label', 'na');
+  };
+
+  const statusFilterOptions = [
+    {
+      key: 'realStatus:open',
+      label: global.t?.t('contract','status', 'open') || 'Em aberto',
+      color: getStatusColor('open'),
+      normalizedStatus: 'open',
+    },
+    {
+      key: 'realStatus:pending',
+      label: global.t?.t('contract','status', 'pending') || 'Pendente',
+      color: getStatusColor('pending'),
+      normalizedStatus: 'pending',
+    },
+    {
+      key: 'realStatus:closed',
+      label: global.t?.t('contract','status', 'closed') || 'Fechado',
+      color: getStatusColor('closed'),
+      normalizedStatus: 'closed',
+    },
+  ];
+
+  const contractMatchesStatusFilter = useCallback(
+    (contract, filterKey) => {
+      if (!filterKey) {
+        return true;
+      }
+
+      const normalizedStatus = normalizeContractsStatusKey(
+        contract?.status?.realStatus || contract?.status?.status,
+      );
+      const normalizedFilter = normalizeContractsStatusKey(
+        String(filterKey || '').replace('realStatus:', ''),
+      );
+
+      return normalizedStatus === normalizedFilter;
+    },
+    [],
   );
 
   // Usa apenas os contratos que vêm da API (já filtrados e paginados)
@@ -381,19 +425,70 @@ const ContractsPage = () => {
   });
 
   const renderContract = contract => (
-    <ContractCard
-      key={contract.id}
-      contract={contract}
-      navigation={navigation}
-      contractStyles={contractStyles}
-      palette={palette}
-      getStatusColor={getStatusColor}
-      getStatusLabel={getStatusLabel}
-      getContractClientName={getContractClientName}
-      isContractClientPendingResolution={isContractClientPendingResolution}
-    />
-  );
+    <View key={contract.id} style={contractStyles.contractCard}>
+      <View style={contractStyles.contractHeader}>
+        <View style={contractStyles.headerContent}>
+          <Text style={contractStyles.contractTitle}>
+            {contract.contractModel.model}
+          </Text>
+          <View
+            style={[
+              contractStyles.statusBadge,
+              { backgroundColor: getStatusColor(contract.status.status) },
+            ]}>
+            <Text style={contractStyles.statusText}>
+              {getStatusLabel(contract.status?.realStatus || contract.status?.status).toUpperCase()}
+            </Text>
+          </View>
+        </View>
+      </View>
 
+      <View style={contractStyles.contractBody}>
+        <View style={contractStyles.infoRow}>
+          <Icon name="user" size={16} color={palette.listItemIcon} />
+          <Text style={contractStyles.infoLabel}>Cliente:</Text>
+          <Text style={contractStyles.infoValue}>
+            {(() => {
+              const clientName = getContractClientName(contract);
+              if (clientName) {
+                return clientName;
+              }
+
+              return isContractClientPendingResolution(contract)
+                ? 'Carregando cliente...'
+                : 'Cliente nao informado';
+            })()}
+          </Text>
+        </View>
+
+        <View style={contractStyles.dateContainer}>
+          <View style={contractStyles.dateItem}>
+            <Icon name="calendar" size={16} color={palette.listItemIcon} />
+            <Text style={contractStyles.dateLabel}>Início</Text>
+            <Text style={contractStyles.dateValue}>
+              {new Date(contract.startDate).toLocaleDateString('pt-br')}
+            </Text>
+          </View>
+          <View style={contractStyles.dateItem}>
+            <Icon name="calendar" size={16} color={palette.listItemIcon} />
+            <Text style={contractStyles.dateLabel}>Término</Text>
+            <Text style={contractStyles.dateValue}>
+              {new Date(contract.endDate).toLocaleDateString('pt-br')}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={contractStyles.viewButton}
+        onPress={() =>
+          navigation.navigate('ContractDetails', { contractId: contract.id })
+        }>
+        <Text style={contractStyles.viewButtonText}>Ver Detalhes</Text>
+        <Icon name="arrow-right" size={16} color={palette.buttonIcon} />
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={contractStyles.container}>

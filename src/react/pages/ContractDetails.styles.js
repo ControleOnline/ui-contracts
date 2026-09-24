@@ -1,4 +1,3 @@
-
 import {Platform, StyleSheet} from 'react-native';
 
 export const createStyles = palette =>
@@ -17,21 +16,13 @@ export const createStyles = palette =>
       borderBottomColor: palette.headerBorder,
     },
     backButton: {
-      minWidth: 44,
-      height: 36,
-      borderRadius: 18,
-      paddingHorizontal: 10,
-      flexDirection: 'row',
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: palette.navigationActiveBackground,
       marginRight: 12,
-    },
-    backButtonText: {
-      marginLeft: 4,
-      fontSize: 14,
-      fontWeight: '600',
-      color: palette.navigationActiveIcon,
     },
     topAvatar: {
       width: 60,
@@ -155,16 +146,6 @@ export const createStyles = palette =>
       padding: 24,
     },
     htmlWrapper: {
-      backgroundColor: palette.cardBackground,
-    },
-    nativePdfContainer: {
-      height: 520,
-      width: '100%',
-      backgroundColor: palette.cardBackground,
-    },
-    nativePdf: {
-      flex: 1,
-      width: '100%',
       backgroundColor: palette.cardBackground,
     },
     fixedSignButtonContainer: {
