@@ -94,7 +94,8 @@ export const createStyles = palette =>
     },
     tabItem: {
       flex: 1,
-      paddingVertical: 16,
+      minHeight: 40,
+      justifyContent: 'center',
       alignItems: 'center',
     },
     tabActive: {
