@@ -1,14 +1,14 @@
 {
-  "version": "1.6.86",
+  "version": "1.6.88",
   "rc": 1,
-  "branch": "rc/1.6.86-rc.1",
-  "baseMaster": "1a133312c40ad3d3ccf429363ea6c7c75bc95360",
-  "baseTag": "v1.6.85",
+  "branch": "rc/1.6.88-rc.1",
+  "baseMaster": "5b43e966da14e4d835873541a255e17a6941c3f3",
+  "baseTag": "v1.6.87",
   "tasks": [
     98
   ],
   "frozen": true,
   "repositories": {
-    "ControleOnline/ui-contracts": "3027ce8b4cfb80e841857bb0ceb92756015ec0f4"
+    "ControleOnline/ui-contracts": "7f3716e68dc15271dbc79fde7e303d2886457592"
   }
 }
