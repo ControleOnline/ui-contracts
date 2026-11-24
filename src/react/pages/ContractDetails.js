@@ -8,6 +8,7 @@ import RenderHTML from 'react-native-render-html';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
+import { resolveDocumentFileContent } from '@controleonline/ui-common/src/react/utils/documentFileContent';
 const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
 import {createStyles} from './ContractDetails.styles';
 import {
@@ -360,7 +361,7 @@ const ContractDetails = () => {
         setFileLoading(true);
         try {
           const res = await contractActions.getFileContent(data.contractFile['@id']);
-          setFileContent(res.content || '');
+          setFileContent(resolveDocumentFileContent(res?.content).content);
         } catch {
           setFileError('Falha ao carregar a minuta');
         } finally {
@@ -401,10 +402,25 @@ const ContractDetails = () => {
       const updated = await contractActions.get(contractId);
       if (updated?.contractFile) {
         const res = await contractActions.getFileContent(updated.contractFile['@id']);
-        setFileContent(res.content || '');
+        setFileContent(resolveDocumentFileContent(res?.content).content);
       }
     } catch {
       showError('Erro ao assinar o contrato');
+    }
+  };
+
+  // The draft is rendered from the order products; regenerate it after they change.
+  const handleProductsChanged = async () => {
+    try {
+      await contractActions.generate({ id: contractId });
+      const updated = await contractActions.get(contractId);
+      if (updated?.contractFile) {
+        const res = await contractActions.getFileContent(updated.contractFile['@id']);
+        setFileContent(resolveDocumentFileContent(res?.content).content);
+        setFileError(null);
+      }
+    } catch {
+      showError('Produtos salvos, mas a minuta nao foi atualizada. Recarregue a tela.');
     }
   };
 
@@ -552,6 +568,7 @@ const ContractDetails = () => {
             emptyTitle="Nenhum produto vinculado a este contrato."
             emptySubtitle="Quando houver uma proposta anterior com produtos, eles serao copiados automaticamente para ca."
             searchPlaceholder="Buscar produto para adicionar ao contrato..."
+            onProductsChanged={handleProductsChanged}
           />
         </View>
 
