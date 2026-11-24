@@ -8,6 +8,7 @@ import RenderHTML from 'react-native-render-html';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
+const { buildContractSubtitle } = require('../utils/contractHeader');
 import { resolveDocumentFileContent } from '@controleonline/ui-common/src/react/utils/documentFileContent';
 const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
 import {createStyles} from './ContractDetails.styles';
@@ -125,7 +126,7 @@ const MinutaTab = ({
     <View style={{flex: 1}}>
       <ScrollView
         style={styles.tabScroll}
-        contentContainerStyle={{padding: 16, paddingBottom: canEdit ? 120 : 40}}>
+        contentContainerStyle={{padding: 12, paddingBottom: canEdit ? 76 : 24}}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{contractDocumentLabel}</Text>
 
@@ -476,46 +477,25 @@ const ContractDetails = () => {
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <Icon
             name="arrow-back"
-            size={24}
+            size={20}
             color={palette.navigationActiveIcon}
           />
         </TouchableOpacity>
         <View style={styles.topAvatar}>
-          <Icon name="description" size={32} color={palette.buttonIcon} />
+          <Icon name="description" size={18} color={palette.buttonIcon} />
         </View>
         <View style={{flex: 1}}>
           <Text style={styles.topTitle} numberOfLines={1}>
             {contract.contractModel?.model || 'Contrato sem modelo'}
           </Text>
-          <Text style={styles.topSubtitle}>ID: {contract.id}</Text>
-        </View>
-      </View>
-      <View style={styles.fixedInfo}>
-        <View
-          style={[
-            styles.statusBox,
-            {
-              borderColor: contractStatusColor,
-            },
-          ]}>
-          <Text style={[styles.statusText, { color: contractStatusColor }]}>
-            {global.t?.t('contract', 'title', contract.status?.status).toUpperCase() || '—'}
+          <Text style={styles.topSubtitle} numberOfLines={1}>
+            {buildContractSubtitle(contract)}
           </Text>
         </View>
-
-        <View style={styles.datesRow}>
-          <View style={styles.dateBlock}>
-            <Text style={styles.dateLabel}>Início</Text>
-            <Text style={styles.dateValue}>
-              {contract.startDate ? new Date(contract.startDate).toLocaleDateString('pt-BR') : '—'}
-            </Text>
-          </View>
-          <View style={styles.dateBlock}>
-            <Text style={styles.dateLabel}>Término</Text>
-            <Text style={styles.dateValue}>
-              {contract.endDate ? new Date(contract.endDate).toLocaleDateString('pt-BR') : '—'}
-            </Text>
-          </View>
+        <View style={[styles.statusBox, { borderColor: contractStatusColor }]}>
+          <Text style={[styles.statusText, { color: contractStatusColor }]} numberOfLines={1}>
+            {global.t?.t('contract', 'title', contract.status?.status) || contract.status?.status || '—'}
+          </Text>
         </View>
       </View>
       <View style={styles.tabs}>
