@@ -1,6 +1,6 @@
 {
   "name": "@controleonline/ui-contracts",
-  "version": "1.6.84",
+  "version": "1.6.86",
   "author": "Controle Online",
   "description": "ControleOnline Contract Quasar UI Component",
   "license": "MIT",
@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/controleonline/conline-quasar-ui"
+    "url": "https://github.com/ControleOnline/ui-contracts"
   },
   "bugs": "",
   "homepage": "https://www.controleonline.com/devs/plugins",
