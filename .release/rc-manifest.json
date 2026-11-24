@@ -1,0 +1,14 @@
+{
+  "version": "1.6.84",
+  "rc": 1,
+  "branch": "rc/1.6.84-rc.1",
+  "baseMaster": "69915f35aaefbbd33c1b862e9bba709cb08c3431",
+  "baseTag": "v1.6.83",
+  "tasks": [
+    98
+  ],
+  "frozen": true,
+  "repositories": {
+    "ControleOnline/ui-contracts": "9269ff1cdb3d602eaea77a37fd51197dea5afeb6"
+  }
+}
