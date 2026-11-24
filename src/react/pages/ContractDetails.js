@@ -1,6 +1,5 @@
-import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
-import { Text, View, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState} from 'react';
+import { Text, View, TouchableOpacity, ScrollView, ActivityIndicator, Platform, useWindowDimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStores } from '@store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -8,6 +7,13 @@ import RenderHTML from 'react-native-render-html';
 import AnimatedModal from '@controleonline/ui-common/src/react/components/AnimatedModal';
 import { useMessage } from '@controleonline/ui-common/src/react/components/MessageService';
 import LinkedOrderProductsTab from '@controleonline/ui-common/src/react/components/LinkedOrderProductsTab';
+import DocumentDetailsShell from '@controleonline/ui-common/src/react/components/documentDetails/DocumentDetailsShell';
+import DocumentSheet from '@controleonline/ui-common/src/react/components/documentDetails/DocumentSheet';
+import useLinkedOrderSummary from '@controleonline/ui-common/src/react/hooks/useLinkedOrderSummary';
+import { getPeopleDisplayName } from '@controleonline/ui-common/src/react/utils/peopleDisplay';
+const { formatContractPeriod, formatContractStatusLabel, translatedOr } = require('../utils/contractHeader');
+const contractLabel = (key, fallback) => translatedOr(global.t?.t('contract', 'label', key), key, fallback);
+import { colors } from '@controleonline/../../src/styles/colors';
 import { resolveDocumentFileContent } from '@controleonline/ui-common/src/react/utils/documentFileContent';
 const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
 import {createStyles} from './ContractDetails.styles';
@@ -15,7 +21,6 @@ import {
   buildContractsPalette,
   getContractsStatusColor,
 } from '../theme/contractsTheme';
-const { width, height } = Dimensions.get('window');
 
 const PdfViewerFromContent = ({ content, palette, styles }) => {
   const [pdfUrl, setPdfUrl] = useState(null);
@@ -66,7 +71,7 @@ const PdfViewerFromContent = ({ content, palette, styles }) => {
         style={{
           alignItems: 'center',
           justifyContent: 'center',
-          height: height * 0.75,
+          height: '100%',
           padding: 30,
         }}>
         <Icon name="error-outline" size={64} color={palette.iconDanger} />
@@ -83,7 +88,7 @@ const PdfViewerFromContent = ({ content, palette, styles }) => {
         style={{
           alignItems: 'center',
           justifyContent: 'center',
-          height: height * 0.75,
+          height: '100%',
         }}>
         <ActivityIndicator size="large" color={palette.loadingSpinner} />
         <Text style={styles.loadingText}>
@@ -94,7 +99,7 @@ const PdfViewerFromContent = ({ content, palette, styles }) => {
   }
 
   return (
-    <View style={{height: height * 0.75, width: '100%'}}>
+    <View style={{height: '100%', width: '100%'}}>
       <iframe
         title="pdf-viewer"
         src={pdfUrl}
@@ -104,76 +109,53 @@ const PdfViewerFromContent = ({ content, palette, styles }) => {
   );
 };
 
-const MinutaTab = ({
-  canEdit,
-  contract,
-  fileContent,
-  fileError,
-  fileLoading,
-  handleSignContract,
-  palette,
-  styles,
-}) => {
-  const isHTML = fileContent?.trim?.().startsWith?.('<') ?? false;
-  const contractDocumentLabel =
-    contract?.status?.realStatus === 'closed'
-      ? global.t?.t('contract', 'label', 'contract')
-      : global.t?.t('contract', 'label', 'draft');
-  const loadingDocumentLabel = contractDocumentLabel || 'documento';
 
+// Readable width of the document inside the "paper" (see DocumentDetailsShell).
+const resolveDocumentWidth = width => (width >= 768 ? Math.min(width - 48, 920) - 80 : width - 32);
+
+const ContractDocument = ({ document, fileError, palette, styles }) => {
+  const { width } = useWindowDimensions();
+  const fileContent = document?.content || '';
+
+  if (fileError) {
+    return <Text style={styles.errorText}>{fileError}</Text>;
+  }
+  if (!fileContent) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={palette.loadingSpinner} />
+        <Text style={styles.loadingText}>Gerando minuta...</Text>
+      </View>
+    );
+  }
+  if (document.kind === 'text') {
+    return (
+      <Text selectable style={{color: palette.textSecondary, fontSize: 15, lineHeight: 24}}>
+        {fileContent}
+      </Text>
+    );
+  }
+  if (document.kind === 'html') {
+    return (
+      <RenderHTML
+        contentWidth={resolveDocumentWidth(width)}
+        source={{ html: fileContent }}
+        ignoredDomTags={['meta', 'title']}
+        baseStyle={{color: palette.textSecondary, fontSize: 15, lineHeight: 24}}
+      />
+    );
+  }
+  if (Platform.OS === 'web') {
+    return (
+      <View style={{height: 720}}>
+        <PdfViewerFromContent content={fileContent} palette={palette} styles={styles} />
+      </View>
+    );
+  }
   return (
-    <View style={{flex: 1}}>
-      <ScrollView
-        style={styles.tabScroll}
-        contentContainerStyle={{padding: 16, paddingBottom: canEdit ? 120 : 40}}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{contractDocumentLabel}</Text>
-
-          {fileLoading ? (
-            <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color={palette.loadingSpinner} />
-              <Text style={styles.loadingText}>{`Carregando ${loadingDocumentLabel}...`}</Text>
-            </View>
-          ) : fileError ? (
-            <Text style={styles.errorText}>{fileError}</Text>
-          ) : fileContent ? (
-            <View style={styles.htmlWrapper}>
-              {isHTML ? (
-                <RenderHTML
-                  contentWidth={width - 32}
-                  source={{ html: fileContent }}
-                  ignoredDomTags={['meta', 'title']}
-                  baseStyle={{color: palette.textSecondary, lineHeight: 24}}
-                />
-              ) : Platform.OS === 'web' ? (
-                <PdfViewerFromContent
-                  content={fileContent}
-                  palette={palette}
-                  styles={styles}
-                />
-              ) : (
-                <View style={styles.centerContainer}>
-                  <Icon name="picture-as-pdf" size={64} color={palette.iconInfo} />
-                  <Text style={styles.loadingText}>PDF não suportado inline no mobile</Text>
-                </View>
-              )}
-            </View>
-          ) : (
-            <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color={palette.loadingSpinner} />
-              <Text style={styles.loadingText}>{`Gerando ${loadingDocumentLabel}...`}</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-      {canEdit && (
-        <View style={styles.fixedSignButtonContainer}>
-          <TouchableOpacity style={styles.signButton} onPress={handleSignContract}>
-            <Icon name="edit" size={20} color={palette.buttonIcon} />
-            <Text style={styles.signButtonText}>Assinar Contrato</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+    <View style={styles.centerContainer}>
+      <Icon name="picture-as-pdf" size={64} color={palette.iconInfo} />
+      <Text style={styles.loadingText}>PDF não suportado inline no mobile</Text>
     </View>
   );
 };
@@ -192,16 +174,13 @@ const AssinantesTab = ({
   styles,
 }) => {
   return (
-    <ScrollView
-      style={styles.tabScroll}
-      contentContainerStyle={{padding: 16, paddingBottom: 100}}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{global.t?.t('contract', 'label', 'signatories')}</Text>
+    <ScrollView contentContainerStyle={{paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24}}>
+      <View>
 
         {subscribers.length === 0 ? (
-          <View style={styles.centerContainer}>
-            <Icon name="people" size={64} color={palette.iconDisabled} />
-            <Text style={styles.emptyText}>{global.t?.t('contract', 'label', 'noSignatories')}</Text>
+          <View style={{alignItems: 'center', paddingVertical: 16}}>
+            <Icon name="people" size={36} color={palette.iconDisabled} />
+            <Text style={styles.emptyText}>{contractLabel('noSignatories', 'Nenhum assinante adicionado.')}</Text>
           </View>
         ) : (
           subscribers.map((sub) => (
@@ -210,8 +189,8 @@ const AssinantesTab = ({
                 <Icon name="person" size={24} color={palette.buttonIcon} />
               </View>
               <View style={{flex: 1}}>
-                <Text style={styles.subscriberName}>{sub.people?.name || global.t?.t('contract', 'label', 'nameNotAvailable')}</Text>
-                <Text style={styles.subscriberRole}>{global.t?.t('contract', 'label', sub.peopleType)}</Text>
+                <Text style={styles.subscriberName}>{sub.people?.name || contractLabel('nameNotAvailable', 'Nome não disponível')}</Text>
+                <Text style={styles.subscriberRole}>{contractLabel(sub.peopleType, sub.peopleType === 'Witness' ? 'Testemunha' : 'Responsável - contratante')}</Text>
               </View>
               {canEdit && (
                 <TouchableOpacity onPress={() => handleRemoveSubscriber(sub.id)}>
@@ -224,7 +203,7 @@ const AssinantesTab = ({
 
         {canEdit && (
           <View style={styles.addForm}>
-            <Text style={styles.addTitle}>{global.t?.t('contract', 'label', 'addSignatory')}</Text>
+            <Text style={styles.addTitle}>{contractLabel('addSignatory', 'Adicionar assinante')}</Text>
 
             <TouchableOpacity style={styles.selectField} onPress={() => setPeoplePickerVisible(true)}>
               <Icon
@@ -241,14 +220,14 @@ const AssinantesTab = ({
                     : palette.selectPlaceholderText,
                 }}>
                 {selectedPerson
-                  ? people?.find((p) => p['@id'] === selectedPerson)?.name || global.t?.t('contract', 'label', 'selected')
-                  : global.t?.t('contract', 'label', 'selectPerson')}
+                  ? people?.find((p) => p['@id'] === selectedPerson)?.name || contractLabel('selected', 'Selecionado')
+                  : contractLabel('selectPerson', 'Selecionar pessoa')}
               </Text>
               <Icon name="arrow-drop-down" size={24} color={palette.selectIcon} />
             </TouchableOpacity>
 
             <View style={{marginVertical: 12}}>
-              <Text style={styles.label}>{global.t?.t('contract', 'label', 'role')}</Text>
+              <Text style={styles.label}>{contractLabel('role', 'Papel')}</Text>
               <View style={styles.roleRow}>
                 <TouchableOpacity
                   style={[styles.roleBtn, newSubscriberRole === 'Contractor' && styles.roleBtnActive]}
@@ -260,7 +239,7 @@ const AssinantesTab = ({
                         color: palette.navigationActiveText,
                       },
                     ]}>
-                    {global.t?.t('contract', 'label', 'contractor')}
+                    {contractLabel('contractor', 'Responsável - contratante')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -273,7 +252,7 @@ const AssinantesTab = ({
                         color: palette.navigationActiveText,
                       },
                     ]}>
-                    {global.t?.t('contract', 'label', 'witness')}
+                    {contractLabel('witness', 'Testemunha')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -283,7 +262,7 @@ const AssinantesTab = ({
               style={[styles.addButton, !selectedPerson && styles.addButtonDisabled]}
               disabled={!selectedPerson}
               onPress={handleAddSubscriber}>
-              <Text style={styles.addButtonText}>{global.t?.t('contract', 'label', 'addSignatory')}</Text>
+              <Text style={styles.addButtonText}>{contractLabel('addSignatory', 'Adicionar assinante')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -295,7 +274,7 @@ const AssinantesTab = ({
 const ContractDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { contractId } = route.params;
+  const { contractId, initialTab } = route.params;
 
   const { showSuccess, showError, showWarning } = useMessage();
 
@@ -306,6 +285,11 @@ const ContractDetails = () => {
   const themeColors = themeStore?.getters?.colors || {};
   const palette = useMemo(() => buildContractsPalette(themeColors), [themeColors]);
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const documentTheme = useMemo(
+    // Same brand primary as the proposal screen, so the main action stands out.
+    () => ({ primary: colors.primary }),
+    [],
+  );
 
   const { item: contract, isLoading } = contractStore.getters;
   const contractActions = contractStore.actions;
@@ -313,22 +297,24 @@ const ContractDetails = () => {
   const peopleActions = peopleStore.actions;
   const { items: people, currentCompany } = peopleStore.getters;
 
-  const [fileContent, setFileContent] = useState('');
+  const [fileDocument, setFileDocument] = useState(null);
   const [fileLoading, setFileLoading] = useState(false);
   const [fileError, setFileError] = useState(null);
   const [subscribers, setSubscribers] = useState([]);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [newSubscriberRole, setNewSubscriberRole] = useState('Contractor');
   const [peoplePickerVisible, setPeoplePickerVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const [productsOpen, setProductsOpen] = useState(String(initialTab || '').toLowerCase() === 'products');
+  const [signersOpen, setSignersOpen] = useState(false);
+  const [signing, setSigning] = useState(false);
 
-  const scrollRef = useRef(null);
+  const orderSummary = useLinkedOrderSummary(contract?.['@id']);
   const contractStatusColor = getContractsStatusColor(
     palette,
     contract?.status?.realStatus || contract?.status?.status,
   );
-
   const canEdit = contract?.status?.realStatus === 'open';
+
   const handleBackPress = () => {
     const backAction = resolveContractDetailsBackAction(navigation);
 
@@ -344,30 +330,34 @@ const ContractDetails = () => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
+  const loadDocument = useCallback(async (regenerate = false) => {
+    setFileLoading(true);
+    try {
+      if (regenerate) {
+        await contractActions.generate({ id: contractId });
+      }
+      let data = await contractActions.get(contractId);
+      if (!data?.contractFile) {
+        await contractActions.generate({ id: contractId });
+        data = await contractActions.get(contractId);
+      }
+      if (data?.contractFile) {
+        const res = await contractActions.getFileContent(data.contractFile['@id']);
+        setFileDocument(resolveDocumentFileContent(res?.content));
+        setFileError(null);
+      }
+      return data;
+    } catch {
+      setFileError('Não foi possível carregar a minuta.');
+      return null;
+    } finally {
+      setFileLoading(false);
+    }
+  }, [contractId]);
+
   useEffect(() => {
     const loadData = async () => {
-      let data = await contractActions.get(contractId);
-
-      if (!data?.contractFile) {
-        try {
-          await contractActions.generate({ id: contractId });
-          data = await contractActions.get(contractId);
-        } catch (e) {
-          console.log('Erro ao gerar minuta', e);
-        }
-      }
-
-      if (data?.contractFile) {
-        setFileLoading(true);
-        try {
-          const res = await contractActions.getFileContent(data.contractFile['@id']);
-          setFileContent(resolveDocumentFileContent(res?.content).content);
-        } catch {
-          setFileError('Falha ao carregar a minuta');
-        } finally {
-          setFileLoading(false);
-        }
-      }
+      const data = await loadDocument();
 
       if (data?.peoples?.length) {
         const resolved = await Promise.all(
@@ -396,32 +386,26 @@ const ContractDetails = () => {
   }, [contractId, currentCompany?.id]);
 
   const handleSignContract = async () => {
+    if (subscribers.length === 0) {
+      showWarning('Adicione pelo menos um assinante antes de assinar.');
+      setSignersOpen(true);
+      return;
+    }
+    setSigning(true);
     try {
       await contractActions.sign({ id: contractId });
-      showSuccess('Contrato assinado com sucesso');
-      const updated = await contractActions.get(contractId);
-      if (updated?.contractFile) {
-        const res = await contractActions.getFileContent(updated.contractFile['@id']);
-        setFileContent(resolveDocumentFileContent(res?.content).content);
-      }
+      showSuccess('Contrato enviado para assinatura');
+      await loadDocument();
     } catch {
       showError('Erro ao assinar o contrato');
+    } finally {
+      setSigning(false);
     }
   };
 
   // The draft is rendered from the order products; regenerate it after they change.
   const handleProductsChanged = async () => {
-    try {
-      await contractActions.generate({ id: contractId });
-      const updated = await contractActions.get(contractId);
-      if (updated?.contractFile) {
-        const res = await contractActions.getFileContent(updated.contractFile['@id']);
-        setFileContent(resolveDocumentFileContent(res?.content).content);
-        setFileError(null);
-      }
-    } catch {
-      showError('Produtos salvos, mas a minuta nao foi atualizada. Recarregue a tela.');
-    }
+    await Promise.all([orderSummary.reload(), loadDocument(true)]);
   };
 
   const handleAddSubscriber = async () => {
@@ -455,139 +439,106 @@ const ContractDetails = () => {
     }
   };
 
-  const handleTabPress = (index) => {
-    setActiveTab(index);
-    scrollRef.current?.scrollTo({ x: index * width, animated: true });
-  };
-
-  if (isLoading || !contract) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.topSkeleton} />
-        <View style={styles.infoSkeleton} />
-        <View style={styles.tabsSkeleton} />
-      </SafeAreaView>
-    );
-  }
+  const statusLabel = contract
+    ? formatContractStatusLabel(contract.status, global.t?.t('contract', 'title', contract.status?.status))
+    : null;
+  const signersLabel = contractLabel('signatories', 'Assinantes');
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.topHeader}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Icon
-            name="arrow-back"
-            size={24}
-            color={palette.navigationActiveIcon}
-          />
-        </TouchableOpacity>
-        <View style={styles.topAvatar}>
-          <Icon name="description" size={32} color={palette.buttonIcon} />
-        </View>
-        <View style={{flex: 1}}>
-          <Text style={styles.topTitle} numberOfLines={1}>
-            {contract.contractModel?.model || 'Contrato sem modelo'}
-          </Text>
-          <Text style={styles.topSubtitle}>ID: {contract.id}</Text>
-        </View>
-      </View>
-      <View style={styles.fixedInfo}>
-        <View
-          style={[
-            styles.statusBox,
-            {
-              borderColor: contractStatusColor,
-            },
-          ]}>
-          <Text style={[styles.statusText, { color: contractStatusColor }]}>
-            {global.t?.t('contract', 'title', contract.status?.status).toUpperCase() || '—'}
-          </Text>
-        </View>
+    <>
+      <DocumentDetailsShell
+        theme={documentTheme}
+        title={contract?.contractModel?.model || 'Contrato'}
+        clientName={getPeopleDisplayName(contract?.client)}
+        meta={
+          contract
+            ? [`#${contract.id}`, formatContractPeriod(contract.startDate, contract.endDate)]
+                .filter(Boolean)
+                .join('  ·  ')
+            : ''
+        }
+        totalLabel={orderSummary.totalLabel}
+        statusLabel={statusLabel}
+        statusColor={contractStatusColor}
+        onBack={handleBackPress}
+        loading={isLoading || !contract || (fileLoading && !fileDocument)}
+        secondaryActions={[
+          {
+            key: 'products',
+            icon: 'inventory-2',
+            label: 'Produtos',
+            count: orderSummary.count,
+            onPress: () => setProductsOpen(true),
+          },
+          {
+            key: 'signers',
+            icon: 'groups',
+            label: signersLabel,
+            count: subscribers.length,
+            onPress: () => setSignersOpen(true),
+          },
+        ]}
+        primaryAction={
+          canEdit
+            ? { label: 'Assinar contrato', icon: 'draw', onPress: handleSignContract, loading: signing }
+            : null
+        }>
+        <ContractDocument
+          document={fileDocument}
+          fileError={fileError}
+          palette={palette}
+          styles={styles}
+        />
+      </DocumentDetailsShell>
 
-        <View style={styles.datesRow}>
-          <View style={styles.dateBlock}>
-            <Text style={styles.dateLabel}>Início</Text>
-            <Text style={styles.dateValue}>
-              {contract.startDate ? new Date(contract.startDate).toLocaleDateString('pt-BR') : '—'}
-            </Text>
-          </View>
-          <View style={styles.dateBlock}>
-            <Text style={styles.dateLabel}>Término</Text>
-            <Text style={styles.dateValue}>
-              {contract.endDate ? new Date(contract.endDate).toLocaleDateString('pt-BR') : '—'}
-            </Text>
-          </View>
-        </View>
-      </View>
-      <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 0 && styles.tabActive]}
-          onPress={() => handleTabPress(0)}>
-          <Text style={[styles.tabLabel, activeTab === 0 && styles.tabLabelActive]}>
-            {contract?.status?.realStatus === 'closed'
-              ? global.t?.t('contract', 'label', 'contract')
-              : global.t?.t('contract', 'label', 'draft')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 1 && styles.tabActive]}
-          onPress={() => handleTabPress(1)}>
-          <Text style={[styles.tabLabel, activeTab === 1 && styles.tabLabelActive]}>Produtos</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 2 && styles.tabActive]}
-          onPress={() => handleTabPress(2)}>
-          <Text style={[styles.tabLabel, activeTab === 2 && styles.tabLabelActive]}>{global.t?.t('contract', 'label', 'signatories')}</Text>
-        </TouchableOpacity>
-      </View>
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={(e) => {
-          const idx = Math.round(e.nativeEvent.contentOffset.x / width);
-          if (idx !== activeTab) setActiveTab(idx);
-        }}>
-        <View style={{width, flex: 1}}>
-          <MinutaTab
-            contract={contract}
-            fileContent={fileContent}
-            fileLoading={fileLoading}
-            fileError={fileError}
-            canEdit={canEdit}
-            handleSignContract={handleSignContract}
-            palette={palette}
-            styles={styles}
-          />
-        </View>
-
-        <View style={{width, flex: 1}}>
+      <DocumentSheet
+        visible={productsOpen}
+        onClose={() => setProductsOpen(false)}
+        theme={documentTheme}
+        title="Produtos do contrato"
+        subtitle={
+          orderSummary.count
+            ? `${orderSummary.count} ${orderSummary.count === 1 ? 'item' : 'itens'} · ${orderSummary.totalLabel}`
+            : 'Nenhum produto ainda'
+        }>
+        {contract ? (
           <LinkedOrderProductsTab
             contract={contract}
             canEdit={canEdit}
             emptyTitle="Nenhum produto vinculado a este contrato."
-            emptySubtitle="Quando houver uma proposta anterior com produtos, eles serao copiados automaticamente para ca."
-            searchPlaceholder="Buscar produto para adicionar ao contrato..."
+            emptySubtitle="Adicione os produtos negociados; a minuta é atualizada automaticamente."
+            searchPlaceholder="Buscar produto para adicionar..."
             onProductsChanged={handleProductsChanged}
+            embedded
           />
-        </View>
+        ) : null}
+      </DocumentSheet>
 
-        <View style={{width, flex: 1}}>
-          <AssinantesTab
-            subscribers={subscribers}
-            canEdit={canEdit}
-            handleRemoveSubscriber={handleRemoveSubscriber}
-            handleAddSubscriber={handleAddSubscriber}
-            selectedPerson={selectedPerson}
-            people={people}
-            setPeoplePickerVisible={setPeoplePickerVisible}
-            newSubscriberRole={newSubscriberRole}
-            setNewSubscriberRole={setNewSubscriberRole}
-            palette={palette}
-            styles={styles}
-          />
-        </View>
-      </ScrollView>
+      <DocumentSheet
+        visible={signersOpen}
+        onClose={() => setSignersOpen(false)}
+        theme={documentTheme}
+        title={signersLabel}
+        subtitle={
+          subscribers.length
+            ? `${subscribers.length} ${subscribers.length === 1 ? 'assinante' : 'assinantes'}`
+            : 'Nenhum assinante ainda'
+        }>
+        <AssinantesTab
+          subscribers={subscribers}
+          canEdit={canEdit}
+          handleRemoveSubscriber={handleRemoveSubscriber}
+          handleAddSubscriber={handleAddSubscriber}
+          selectedPerson={selectedPerson}
+          people={people}
+          setPeoplePickerVisible={setPeoplePickerVisible}
+          newSubscriberRole={newSubscriberRole}
+          setNewSubscriberRole={setNewSubscriberRole}
+          palette={palette}
+          styles={styles}
+        />
+      </DocumentSheet>
+
       <AnimatedModal visible={peoplePickerVisible} onRequestClose={() => setPeoplePickerVisible(false)}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
@@ -618,7 +569,7 @@ const ContractDetails = () => {
           </ScrollView>
         </View>
       </AnimatedModal>
-    </SafeAreaView>
+    </>
   );
 };
 
