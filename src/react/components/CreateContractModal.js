@@ -206,7 +206,6 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
         client: selectedClient,
         payer: selectedClient,
         app: 'CRM',
-        orderType: 'sale',
       });
 
       let copiedProductsCount = 0;
