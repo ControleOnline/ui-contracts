@@ -62,6 +62,7 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
   const modelsActions = modelsStore.actions;
 
   const { currentCompany } = peopleGetters;
+  const authUser = useStore('auth')?.getters?.user;
   const people = useMemo(
     () => (Array.isArray(peopleGetters?.items) ? peopleGetters.items : []),
     [peopleGetters?.items],
@@ -104,6 +105,8 @@ const CreateContractModal = ({ visible, onClose, onSuccess }) => {
 
       const clientParams = buildOwnedClientsParams({
         currentCompanyId: currentCompany.id,
+        permissions: currentCompany.permission,
+        sellerPeopleId: authUser?.people ?? authUser?.people_id,
       });
 
       await Promise.all([
