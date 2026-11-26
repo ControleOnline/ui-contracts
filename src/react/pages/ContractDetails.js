@@ -16,6 +16,7 @@ const contractLabel = (key, fallback) => translatedOr(global.t?.t('contract', 'l
 import { colors } from '@controleonline/../../src/styles/colors';
 import { resolveDocumentFileContent } from '@controleonline/ui-common/src/react/utils/documentFileContent';
 const { resolveContractDetailsBackAction } = require('../utils/contractDetailsNavigation');
+const { getContractInitialTabIndex } = require('./contractNavigation');
 import NativePdfViewer from '../components/NativePdfViewer';
 import {createStyles} from './ContractDetails.styles';
 import {
@@ -301,7 +302,13 @@ const ContractDetails = () => {
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [newSubscriberRole, setNewSubscriberRole] = useState('Contractor');
   const [peoplePickerVisible, setPeoplePickerVisible] = useState(false);
-  const [productsOpen, setProductsOpen] = useState(String(initialTab || '').toLowerCase() === 'products');
+  // initialTab 'products' (app-community#55) opens the products panel.
+  const [productsOpen, setProductsOpen] = useState(() => getContractInitialTabIndex(initialTab) === 1);
+  useEffect(() => {
+    if (getContractInitialTabIndex(initialTab) === 1) {
+      setProductsOpen(true);
+    }
+  }, [initialTab]);
   const [signersOpen, setSignersOpen] = useState(false);
   const [signing, setSigning] = useState(false);
 
