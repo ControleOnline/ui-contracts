@@ -1,6 +1,6 @@
 {
   "name": "@controleonline/ui-contracts",
-  "version": "1.6.88",
+  "version": "1.6.90",
   "author": "Controle Online",
   "description": "ControleOnline Contract Quasar UI Component",
   "license": "MIT",
@@ -15,12 +15,17 @@
     "build": "node build/index.js",
     "build:js": "node build/script.javascript.js",
     "build:css": "node build/script.css.js",
-    "test": "npm run test:contract-empty-state && npm run test:contract-details-navigation && npm run test:contract-client-match && npm run test:contract-header",
+    "test": "npm run test:contract-empty-state && npm run test:contract-details-navigation && npm run test:contract-client-match && npm run test:contract-header && npm run test:create-contract-feedback && npm run test:native-pdf-source && npm run test:contract-products-navigation && npm run test:format-contract-date && npm run test:contract-status",
     "test:contract-header": "node --test src/tests/react/utils/contractHeader.test.js",
     "test:contract-empty-state": "node --test src/tests/react/utils/contractEmptyState.test.js",
     "test:contract-details-navigation": "node --test src/tests/react/utils/contractDetailsNavigation.test.js",
     "test:contract-client-match": "node --test src/tests/react/utils/contractClientMatch.test.js",
-    "test:coverage": "c8 --reporter=clover --report-dir coverage npm test"
+    "test:coverage": "c8 --reporter=clover --report-dir coverage npm test",
+    "test:create-contract-feedback": "node --test src/tests/react/utils/createContractFeedback.test.js",
+    "test:native-pdf-source": "node --test src/tests/react/utils/nativePdfSource.test.js",
+    "test:contract-products-navigation": "node --test src/tests/react/pages/contractProductsNavigation.test.js",
+    "test:format-contract-date": "node --test src/tests/react/utils/formatContractDate.test.js",
+    "test:contract-status": "node --test src/tests/react/utils/contractStatus.test.js"
   },
   "devDependencies": {
     "c8": "^10.1.3"

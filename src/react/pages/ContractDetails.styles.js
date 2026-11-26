@@ -143,6 +143,16 @@ export const createStyles = palette =>
       textAlign: 'center',
       padding: 24,
     },
+    nativePdfContainer: {
+      height: 520,
+      width: '100%',
+      backgroundColor: palette.cardBackground,
+    },
+    nativePdf: {
+      flex: 1,
+      width: '100%',
+      backgroundColor: palette.cardBackground,
+    },
     htmlWrapper: {
       backgroundColor: palette.cardBackground,
     },
