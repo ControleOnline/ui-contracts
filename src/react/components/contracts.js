@@ -15,6 +15,7 @@ const {
   buildClientContractsParams,
   filterContractsByClient,
 } = require('../utils/contractClientMatch');
+const {formatContractDate} = require('../utils/formatContractDate');
 
 const Contracts = ({client, parentCompanyIri = ''}) => {
   const themeStore = useStores(state => state.theme);
@@ -113,7 +114,7 @@ const Contracts = ({client, parentCompanyIri = ''}) => {
             <Icon name="event" size={16} color={palette.listItemIcon} />
             <Text style={contractStyles.dateLabel}>{global.t?.t('contract', 'label', 'start')}</Text>
             <Text style={contractStyles.dateValue}>
-              {new Date(contract.startDate).toLocaleDateString('pt-br')}
+              {formatContractDate(contract.startDate)}
             </Text>
           </View>
           <View style={contractStyles.dateItem}>
@@ -124,7 +125,7 @@ const Contracts = ({client, parentCompanyIri = ''}) => {
             />
             <Text style={contractStyles.dateLabel}>{global.t?.t('contract', 'label', 'end')}</Text>
             <Text style={contractStyles.dateValue}>
-              {new Date(contract.endDate).toLocaleDateString('pt-br')}
+              {formatContractDate(contract.endDate)}
             </Text>
           </View>
         </View>
